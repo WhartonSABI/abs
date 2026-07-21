@@ -1,0 +1,278 @@
+---
+title: "MLB ABS Challenge Run Value"
+subtitle: "Frozen 2026 regular-season snapshot through July 19"
+author: "Research pipeline output"
+date: last-modified
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(arrow)
+library(data.table)
+library(ggplot2)
+library(knitr)
+
+required_files <- file.path("data-derived", c(
+  "pitch_ledger.parquet", "challenge_events.parquet",
+  "remaining_opportunities.parquet", "team_summaries.parquet"
+))
+if (!all(file.exists(required_files))) {
+  stop("Derived files are missing. Run `make pipeline` before rendering.")
+}
+
+ledger <- as.data.table(read_parquet(required_files[[1]]))
+challenges <- as.data.table(read_parquet(required_files[[2]]))
+published_challenges <- challenges[publication_eligible == TRUE]
+remaining <- as.data.table(read_parquet(required_files[[3]]))
+teams <- as.data.table(read_parquet(required_files[[4]]))
+team_intervals <- as.data.table(read_parquet("data-derived/team_intervals.parquet"))
+adjusted_intervals <- as.data.table(read_parquet("data-derived/adjusted_intervals.parquet"))
+validation <- fread("data-derived/validation_checks.csv")
+coverage <- fread("data-derived/coverage.csv")
+model_validation <- fread("data-derived/model_validation.csv")
+history_coverage <- fread("data-derived/history_coverage.csv")
+
+team_lookup <- unique(rbind(
+  ledger[, .(team_id = away_team_id, team = away_team)],
+  ledger[, .(team_id = home_team_id, team = home_team)]
+))
+```
+
+# Provenance and validation
+
+The analysis joins MLB live feeds, daily Statcast pitch exports, and Savant's
+ABS detail. Raw responses are cached with SHA-256 manifests. A challenge is
+published only when its identity and explicit outcome reconcile to both the
+game's final successful/failed totals and Savant.
+
+Statcast alone is not the challenge ledger. Challenge timing and explicit
+overturned/upheld outcomes come from MLB's `MJ` review records; Statcast
+provides pitch geometry and the pre-pitch state. Initial and corrected
+post-call states are generated from that common state, and Savant independently
+validates the event identity, original call, outcome, and geometric ruling.
+The full acquisition and reconciliation history is recorded in
+[`docs/data-acquisition-walkthrough.md`](../docs/data-acquisition-walkthrough.md).
+
+```{r}
+kable(validation[, .(check, passed, observed, expected)], digits = 4,
+  caption = "Publication acceptance checks")
+kable(coverage[scope == "league"], digits = 4)
+kable(history_coverage, digits = 4)
+
+model_display <- data.table(
+  diagnostic = c("RE288: 2025 holdout", "Home WP: 2025 holdout",
+    "RE288 vs Savant overturns"),
+  n = model_validation$n,
+  metric_1 = c(
+    sprintf("RMSE %.4f", model_validation$rmse[[1]]),
+    sprintf("Brier %.4f", model_validation$brier[[2]]),
+    sprintf("RMSE %.4f", model_validation$rmse[[3]])
+  ),
+  metric_2 = c(
+    sprintf("MAE %.4f", model_validation$mae[[1]]),
+    sprintf("log loss %.4f", model_validation$log_loss[[2]]),
+    sprintf("correlation %.4f", model_validation$correlation[[3]])
+  )
+)
+kable(model_display, caption = "Model validation diagnostics")
+```
+
+# Challenge timing and success-rate accounting
+
+Explicit `false` outcomes are upheld challenges, not missing observations.
+The denominator below is therefore every resolved attempt.
+
+```{r}
+challenge_accounting <- published_challenges[, .(
+  attempts = .N,
+  overturned = sum(challenge_outcome == "overturned"),
+  upheld = sum(challenge_outcome == "upheld"),
+  unresolved = sum(!challenge_outcome %in% c("overturned", "upheld")),
+  success_rate = mean(challenge_outcome == "overturned")
+)]
+kable(challenge_accounting, digits = 4)
+
+timing <- published_challenges[, .N, by = .(inning, half, challenge_outcome)]
+ggplot(timing, aes(inning, N, fill = challenge_outcome)) +
+  geom_col() +
+  facet_wrap(~half) +
+  labs(x = "Inning", y = "Challenges", fill = "Outcome") +
+  theme_minimal()
+```
+
+# Actual challenge value
+
+Immediate gain is the count-aware corrected-state minus original-state value
+from the challenger's perspective. Upheld calls have zero immediate gain and
+their modeled marginal inventory cost is reported separately.
+
+```{r}
+actual <- published_challenges[, .(
+  attempts = .N,
+  overturned = sum(challenge_outcome == "overturned"),
+  upheld = sum(challenge_outcome == "upheld"),
+  gross_re = sum(actual_re_gain, na.rm = TRUE),
+  failed_inventory_re = sum(failed_inventory_cost_re, na.rm = TRUE),
+  net_re = sum(actual_re_gain - failed_inventory_cost_re, na.rm = TRUE),
+  gross_wpa = sum(actual_wpa_gain, na.rm = TRUE),
+  failed_inventory_wpa = sum(failed_inventory_cost_wpa, na.rm = TRUE)
+)][, success_rate := overturned / attempts]
+kable(actual[, .(
+  attempts, overturned, upheld,
+  success_pct = 100 * success_rate,
+  gross_re, failed_inventory_re, net_re,
+  gross_wpa, failed_inventory_wpa
+)], digits = 3, caption = "League challenge value")
+
+failed_cost_benchmark <- published_challenges[challenge_outcome == "upheld", .(
+  upheld_attempts = .N,
+  savant_fixed_cost_re_per_failure = mean(sz_challenge_lost_runs, na.rm = TRUE),
+  modeled_inventory_re_per_failure = mean(failed_inventory_cost_re, na.rm = TRUE),
+  modeled_inventory_wpa_per_failure = mean(failed_inventory_cost_wpa, na.rm = TRUE)
+)]
+setnames(failed_cost_benchmark, c(
+  "upheld", "Savant fixed RE", "modeled inventory RE", "modeled inventory WPA"
+))
+kable(failed_cost_benchmark, digits = 4,
+  caption = "Per-failure benchmark versus modeled inventory cost")
+```
+
+# Missed and out-of-challenges value
+
+These are realized correctable calls. The out-of-challenges column does not
+assume that a club would have challenged every such pitch.
+
+```{r}
+missed <- ledger[correctable_opportunity == TRUE, .(
+  missed_available = sum(opportunity_status == "missed_available"),
+  missed_re = sum(fifelse(opportunity_status == "missed_available",
+    potential_challenger_re, 0), na.rm = TRUE),
+  out_of_challenges = sum(opportunity_status == "out_of_challenges"),
+  out_re = sum(fifelse(opportunity_status == "out_of_challenges",
+    potential_challenger_re, 0), na.rm = TRUE)
+), by = .(team_id = adverse_team_id)][order(-out_re)]
+missed <- merge(missed, team_lookup, by = "team_id")
+missed_display <- missed[order(-out_re)][1:10, .(
+  Team = team,
+  `Missed available` = missed_available,
+  `Missed RE` = missed_re,
+  `Out of challenges` = out_of_challenges,
+  `Out RE` = out_re
+)]
+kable(missed_display, digits = 3,
+  caption = "Ten teams with the most realized RE lost at zero inventory")
+```
+
+# Remaining-opportunity inventory curves
+
+Inventory is expressed first in future correctable opportunities, then RE and
+WPA. Curves use leave-one-game-out state averages; marginal values use the
+observed-behavior recursion.
+
+```{r}
+start_states <- remaining[, .SD[which.min(pitch_order)],
+  by = .(game_pk, team_id)]
+inventory_summary <- start_states[, .(
+  expected_correctable = mean(expected_correctable_remaining, na.rm = TRUE),
+  expected_offense = mean(expected_correctable_offense_remaining, na.rm = TRUE),
+  expected_defense = mean(expected_correctable_defense_remaining, na.rm = TRUE),
+  expected_re = mean(expected_re_remaining, na.rm = TRUE),
+  expected_wpa = mean(expected_wpa_remaining, na.rm = TRUE),
+  first_unit_re = mean(marginal_re_1_to_0, na.rm = TRUE),
+  second_unit_re = mean(marginal_re_2_to_1, na.rm = TRUE)
+)]
+setnames(inventory_summary, c(
+  "Correctable", "Offense", "Defense", "Expected RE", "Expected WPA",
+  "Unit 1 RE", "Unit 2 RE"
+))
+kable(inventory_summary, digits = 4,
+  caption = "League-average remaining opportunity at game start")
+
+curves <- remaining[, .(
+  expected_correctable = mean(expected_correctable_remaining, na.rm = TRUE),
+  marginal_first_re = mean(marginal_re_1_to_0, na.rm = TRUE),
+  marginal_second_re = mean(marginal_re_2_to_1, na.rm = TRUE)
+), by = .(inning, outs_before)]
+ggplot(curves, aes(inning, expected_correctable, color = factor(outs_before))) +
+  geom_line(linewidth = 0.8) +
+  labs(x = "Inning", y = "Expected correctable opportunities remaining",
+    color = "Outs") +
+  theme_minimal()
+```
+
+# Team comparisons and WPA context
+
+Raw totals and opportunity-adjusted attempt residuals are shown together;
+neither is interpreted causally.
+
+```{r}
+teams_display <- merge(teams, team_lookup, by = "team_id")
+
+decision_table <- teams_display[, .(
+  team, attempts, overturns, upheld,
+  success_pct = 100 * success_rate,
+  net_re, net_wpa
+)][order(-net_re)]
+kable(decision_table, digits = 3,
+  caption = "Challenge outcomes and net value by team")
+
+opportunity_table <- teams_display[, .(
+  team,
+  missed_re = missed_available_re,
+  out_re = out_of_challenges_re,
+  expected_correctable = expected_correctable_remaining,
+  first_unit_re = marginal_re_first_unit,
+  second_unit_re = marginal_re_second_unit
+)][order(-out_re)]
+kable(opportunity_table, digits = 3,
+  caption = "Missed, zero-inventory, and remaining-opportunity value")
+
+adjusted_residual_intervals <- adjusted_intervals[
+  metric == "challenge_residual"
+]
+adjusted_table <- merge(
+  teams_display[, .(team_id, team, observed_attempts, expected_attempts,
+    challenge_residual)],
+  adjusted_residual_intervals[, .(team_id, lower, upper)],
+  by = "team_id"
+)[order(-challenge_residual)]
+kable(adjusted_table[, .(team, observed_attempts, expected_attempts,
+  challenge_residual, lower, upper)], digits = 3,
+  caption = "Opportunity-adjusted attempts with 95% game-cluster intervals")
+
+net_re_intervals <- team_intervals[metric == "net_re"]
+net_re_table <- merge(
+  teams_display[, .(team_id, team, net_re)],
+  net_re_intervals[, .(team_id, lower, upper)],
+  by = "team_id"
+)[order(-net_re)]
+kable(net_re_table[, .(team, net_re, lower, upper)], digits = 3,
+  caption = "Net challenge RE with 95% game-cluster intervals")
+```
+
+# Sensitivity and limitations
+
+The boundary sensitivity removes pitches within 0.25 inches of the official
+ABS edge. This targets public-tracking and rounding uncertainty without
+reclassifying the remaining pitches.
+
+```{r}
+sensitivity <- ledger[, .(
+  correctable_all = sum(correctable_opportunity, na.rm = TRUE),
+  correctable_outside_boundary = sum(
+    correctable_opportunity & !boundary_sensitivity_excluded, na.rm = TRUE),
+  out_all = sum(opportunity_status == "out_of_challenges", na.rm = TRUE),
+  out_outside_boundary = sum(
+    opportunity_status == "out_of_challenges" & !boundary_sensitivity_excluded,
+    na.rm = TRUE)
+)]
+kable(sensitivity)
+```
+
+Unchallenged ABS outcomes remain geometry-based inferences. The RE288 and
+home-win GAM are empirical 2023–2025 models, and all adjusted comparisons may
+retain unmeasured differences in communication, pitcher/catcher confidence,
+and game context.

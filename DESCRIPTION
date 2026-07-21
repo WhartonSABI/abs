@@ -1,0 +1,32 @@
+Package: mlbABSRunValue
+Title: MLB ABS Challenge Run Value Research Pipeline
+Version: 0.1.0
+Authors@R: person("Jonathan", role = c("aut", "cre"), email = "jonathan@example.com")
+Description: Reproducible collection, validation, and valuation of 2026 MLB
+    automated ball-strike challenge decisions.
+License: MIT
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports:
+    arrow,
+    curl,
+    data.table,
+    digest,
+    dplyr,
+    ggplot2,
+    httr2,
+    jsonlite,
+    lubridate,
+    mgcv,
+    purrr,
+    readr,
+    rlang,
+    targets,
+    tidyr
+Suggests:
+    knitr,
+    renv,
+    rmarkdown,
+    rprojroot,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

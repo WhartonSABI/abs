@@ -1,0 +1,4 @@
+game_pk,play_id,reason,source,notes
+822717,04c46cff-ad12-38e1-aacd-423e89b12784,composite_replay_additional_review,MLB live feed vs Savant ABS detail,"MJ review nested under an MA tag review; included in game usedSuccessful but absent from Savant"
+825000,cf7c6119-4ad9-38aa-ba92-307c35bfd563,feed_ruling_geometry_conflict,MLB live feed vs Savant ABS detail,"Explicit upheld MJ review included in game usedFailed but absent from Savant; public geometry indicates ball"
+

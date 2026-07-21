@@ -1,0 +1,51 @@
+audit_id,audit_category,game_pk,at_bat_number,pitch_number,play_id,status,audit_note
+A01,upheld_challenge,822822,6,6,b91704bd-868f-3f71-b44a-903d9b84202b,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A02,upheld_challenge,822962,20,4,92fbb02d-68b5-3549-bd34-eefe707b9a13,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A03,upheld_challenge,822979,38,5,d69fdbd4-cf81-31d0-9aa7-66eb36d096a1,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A04,upheld_challenge,823538,58,4,ce61df1b-2b4f-337a-a82e-8526511109e2,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A05,upheld_challenge,823212,70,6,f59b91ff-069d-31c8-a2ae-9506a7c1defc,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A06,upheld_challenge,823049,20,3,8d950185-556c-364a-be6e-1492e2ef25c1,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A07,upheld_challenge,822824,29,6,ac511d7c-c297-335e-b4a6-72a19b0edbe5,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A08,upheld_challenge,823200,52,4,0323f310-51af-3ffe-8b35-d2db2fa35a03,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A09,upheld_challenge,822973,62,6,ca003bce-8a97-35a8-929c-acd2802e063f,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A10,upheld_challenge,824256,88,6,2c0c69d3-d12b-321e-b593-377ce38de4da,pass,Explicit upheld; initial/final/ABS calls agree; inventory decrements; Savant fields match
+A11,zero_inventory_correctable,823563,22,1,92e446e8-6bd5-395d-be4a-6d0b10747edf,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A12,zero_inventory_correctable,823219,48,3,2cde02ee-4795-3b5d-b29d-18ae4b6d8a50,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A13,zero_inventory_correctable,824016,34,2,8a31d703-d2e6-3c71-899c-8ac7f26252eb,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A14,zero_inventory_correctable,823603,57,1,015d3ebc-da43-3f64-b410-49749741b2ff,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A15,zero_inventory_correctable,823054,69,1,f4721865-fa5a-3a8e-8c99-f241260a8562,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A16,zero_inventory_correctable,823718,58,6,9987029f-50ee-3d58-af2c-9ebcc85de12e,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A17,zero_inventory_correctable,824117,37,4,39d8b3c7-bf24-31e2-b45d-d49db9630f58,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A18,zero_inventory_correctable,824341,54,4,2d3cf599-1e43-3d7f-b4fa-b304839946bd,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A19,zero_inventory_correctable,823726,80,2,c4a10be7-dd80-347d-8fb2-04e175abaa4f,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A20,zero_inventory_correctable,822799,80,3,bcd852cd-e8dc-3cf3-bce2-3b29c25d2735,pass,No challenge; adverse inventory is zero; geometry reverses adverse initial call
+A21,overturned_challenge,822881,2,5,bc5c4786-002d-3c8a-aaf1-ca66c80f56dd,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A22,overturned_challenge,822959,20,5,7d0dd025-411a-3687-bda3-7565b791d00d,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A23,overturned_challenge,822738,43,5,dfc2bb68-f6b2-34bc-8f1b-54357ea200e6,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A24,overturned_challenge,823124,44,3,d3e70ae6-8143-353b-909e-3a0f27c1bc6b,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A25,overturned_challenge,824599,83,4,5465dd7c-6254-3c5d-854c-976c2cd88d63,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A26,overturned_challenge,823048,8,1,67ea381e-3926-30e8-b1b0-fd99a96450b7,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A27,overturned_challenge,823458,32,1,5f45d460-37c5-3ba8-b1cd-85f2780b491b,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A28,overturned_challenge,822836,49,1,e5b65aca-8450-34eb-8f98-f485e87d7e8f,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A29,overturned_challenge,823632,69,3,73c0c02f-6ad8-338a-8b7e-5798e8390f01,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A30,overturned_challenge,824769,82,1,50661037-1927-3a66-946a-8ad51adb7e99,pass,Explicit overturn; final/ABS reverse initial call; inventory retained; Savant fields match
+A31,missed_available,822819,9,5,f7048b11-56c8-3f17-955a-479c7a301db7,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A32,missed_available,822900,22,1,ccc6a5e8-a334-3116-a3ca-cf034a14abc1,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A33,missed_available,822807,33,1,279581c5-c37e-37ad-b48c-5edd12355b36,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A34,missed_available,822825,53,1,267cd923-937c-3f49-a041-aed315601215,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A35,missed_available,822905,72,5,8838779e-a089-33ab-bac6-e0f2cbf187e4,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A36,missed_available,822917,10,2,070da471-28ff-3660-850f-d7fc511a2029,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A37,missed_available,822827,34,1,497de47f-ec4e-3418-8b2f-9688336f0b6a,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A38,missed_available,822834,45,4,791a8beb-86b1-3d44-9bc4-bd148204c187,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A39,missed_available,822884,76,1,1930f4ea-5dd3-33e0-8654-15aa2f95f0c6,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A40,missed_available,824169,73,3,e1483414-7083-30e3-a397-b1c49b087ead,pass,No challenge; inventory is available; geometry reverses adverse initial call
+A41,pa_terminal_linkage,823560,1,5,9f596084-f30a-3086-bc2a-77dc504a5504,pass,MJ review linked to terminal called pitch from plate-appearance metadata; Savant fields match
+A42,pa_terminal_linkage,823645,17,7,b5c29a23-9d72-3241-a9df-fe0e3c29789b,pass,MJ review linked to terminal called pitch from plate-appearance metadata; Savant fields match
+A43,pa_terminal_linkage,823554,39,6,8ea8debd-fea5-39a6-8b6d-045b974775ba,pass,MJ review linked to terminal called pitch from plate-appearance metadata; Savant fields match
+A44,pa_terminal_linkage,824114,54,4,e67e820f-48da-3c75-aef4-f63a61fcc16a,pass,MJ review linked to terminal called pitch from plate-appearance metadata; Savant fields match
+A45,pa_terminal_linkage,823380,69,6,d86e18c0-18f9-3b5b-86a0-4b9d0a46edfb,pass,MJ review linked to terminal called pitch from plate-appearance metadata; Savant fields match
+A46,extra_inning_challenge,824031,74,6,7b881e70-2b1a-3efc-98a4-e706e19fa0a5,pass,Tenth-inning challenge has explicit outcome and inventory transition consistent with replenishment rule
+A47,extra_inning_challenge,823133,76,4,fd53fd5f-1658-305e-a6e8-29c8be3a63c0,pass,Tenth-inning challenge has explicit outcome and inventory transition consistent with replenishment rule
+A48,extra_inning_challenge,824830,86,2,f8a254f1-9fca-33cf-9e93-051d27835083,pass,Tenth-inning challenge has explicit outcome and inventory transition consistent with replenishment rule
+A49,extra_inning_challenge,823769,72,1,bb3b4125-1f7d-34a5-9dbd-0bc5a369931e,pass,Tenth-inning challenge has explicit outcome and inventory transition consistent with replenishment rule
+A50,extra_inning_challenge,823718,90,7,7e61bab1-7682-316d-9153-f0c16e96095b,pass,Tenth-inning challenge has explicit outcome and inventory transition consistent with replenishment rule
