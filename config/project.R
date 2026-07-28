@@ -24,9 +24,9 @@ project_config <- function(env = project_environment()) {
     geometry_sensitivity_inches = 0.25,
     coverage_league_min = 0.995,
     coverage_team_min = 0.99,
-    raw_dir = "data-raw/cache",
-    derived_dir = "data-derived",
-    fixture_dir = "data-raw/fixtures",
+    raw_dir = "data/raw",
+    derived_dir = "data/processed",
+    fixture_dir = "data/fixtures",
     user_agent = "mlb-abs-run-value/0.1 research"
   )
 }

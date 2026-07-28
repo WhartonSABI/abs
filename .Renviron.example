@@ -1,3 +1,5 @@
+# Copy this file to .Renviron before restoring the project environment.
+# The local copy is ignored by Git and may be adjusted for each machine.
 RENV_PATHS_LIBRARY=.Rlib
 RENV_PATHS_ROOT=.renv-root
 RENV_PATHS_CACHE=.renv-cache

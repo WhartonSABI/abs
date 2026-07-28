@@ -15,7 +15,7 @@ library(data.table)
 library(ggplot2)
 library(knitr)
 
-required_files <- file.path("data-derived", c(
+required_files <- file.path("data", "processed", c(
   "pitch_ledger.parquet", "challenge_events.parquet",
   "remaining_opportunities.parquet", "team_summaries.parquet"
 ))
@@ -28,12 +28,12 @@ challenges <- as.data.table(read_parquet(required_files[[2]]))
 published_challenges <- challenges[publication_eligible == TRUE]
 remaining <- as.data.table(read_parquet(required_files[[3]]))
 teams <- as.data.table(read_parquet(required_files[[4]]))
-team_intervals <- as.data.table(read_parquet("data-derived/team_intervals.parquet"))
-adjusted_intervals <- as.data.table(read_parquet("data-derived/adjusted_intervals.parquet"))
-validation <- fread("data-derived/validation_checks.csv")
-coverage <- fread("data-derived/coverage.csv")
-model_validation <- fread("data-derived/model_validation.csv")
-history_coverage <- fread("data-derived/history_coverage.csv")
+team_intervals <- as.data.table(read_parquet("data/processed/team_intervals.parquet"))
+adjusted_intervals <- as.data.table(read_parquet("data/processed/adjusted_intervals.parquet"))
+validation <- fread("data/processed/validation_checks.csv")
+coverage <- fread("data/processed/coverage.csv")
+model_validation <- fread("data/processed/model_validation.csv")
+history_coverage <- fread("data/processed/history_coverage.csv")
 
 team_lookup <- unique(rbind(
   ledger[, .(team_id = away_team_id, team = away_team)],

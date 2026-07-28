@@ -47,4 +47,4 @@ challenge propensity, reachable value at inventories 0/1/2, and marginal
 - `team_intervals.parquet` and `adjusted_intervals.parquet` contain 500-
   replicate game-cluster 95% intervals, including start-of-game inventory
   quantities and opportunity-adjusted challenge residuals.
-- `config/manual_audit.csv` records the 50-event stratified review set.
+- `data/reference/manual_audit.csv` records the 50-event stratified review set.

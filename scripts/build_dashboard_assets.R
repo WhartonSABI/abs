@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
 })
 
 project_dir <- normalizePath(getwd(), mustWork = TRUE)
-if (!file.exists(file.path(project_dir, "data-derived", "pitch_ledger.parquet"))) {
+if (!file.exists(file.path(project_dir, "data", "processed", "pitch_ledger.parquet"))) {
   stop("Run this script from the ABS project root after `make pipeline`.")
 }
 
@@ -21,7 +21,7 @@ dir.create(dirname(json_path), recursive = TRUE, showWarnings = FALSE)
 dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 
 read_derived <- function(name) {
-  as.data.table(read_parquet(file.path(project_dir, "data-derived", name)))
+  as.data.table(read_parquet(file.path(project_dir, "data", "processed", name)))
 }
 
 round_numeric <- function(x, digits = 6L) {

@@ -72,7 +72,7 @@ reconcile_final_inventory <- function(pitch_ledger, totals) {
 }
 
 read_feed_only_challenge_quarantine <- function(
-  path = "config/feed_only_challenges.csv"
+  path = "data/reference/feed_only_challenges.csv"
 ) {
   if (!file.exists(path)) return(data.table::data.table())
   data.table::fread(path, na.strings = c("", "NA"))
@@ -164,7 +164,7 @@ assert_candidate_coverage <- function(pitch_ledger, config) {
 }
 
 validate_manual_audit <- function(
-  pitch_ledger, path = "config/manual_audit.csv"
+  pitch_ledger, path = "data/reference/manual_audit.csv"
 ) {
   if (!file.exists(path)) stop("The required manual audit file is missing")
   audit <- data.table::fread(path, na.strings = c("", "NA"))

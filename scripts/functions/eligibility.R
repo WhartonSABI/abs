@@ -1,4 +1,4 @@
-read_abs_exclusions <- function(path = "config/exclusions.csv") {
+read_abs_exclusions <- function(path = "data/reference/exclusions.csv") {
   if (!file.exists(path)) return(data.table::data.table())
   x <- data.table::fread(path, na.strings = c("", "NA"))
   if (!nrow(x)) return(x)

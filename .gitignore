@@ -1,26 +1,60 @@
-.Rproj.user/
+# R session state
 .Rhistory
+.Rapp.history
 .RData
 .Ruserdata
-.DS_Store
+.Rproj.user/
+
+# Local environment and secrets
+.Renviron
+.Renviron.local
+.env
+.env.*
+!.env.example
+!.Renviron.example
+
+# Local R libraries and package-build products
 .Rlib/
+*.Rcheck/
+*.tar.gz
+
+# renv machine-local state
+renv/library/
+renv/staging/
+renv/python/
+renv/local/
+renv/cellar/
 .renv-cache/
 .renv-root/
 .renv-library/
-.quarto/
-tmp/
+
+# targets cache
 _targets/
 _targets.RData
-data-raw/cache/
-data-raw/downloads/
-data-derived/*.parquet
-data-derived/*.csv
-report/_freeze/
+
+# Quarto caches and rendered support files
+.quarto/
+**/*.quarto_ipynb
 report/_site/
+report/*_files/
 report/*.html
 report/*.pdf
-!data-raw/fixtures/
-!data-derived/.gitkeep
+
+# Downloaded source data and analysis-scale derived data
+data/raw/
+data/processed/*
+!data/processed/README.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
 /.quarto/
-**/*.quarto_ipynb

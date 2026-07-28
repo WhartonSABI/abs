@@ -1,7 +1,7 @@
 library(targets)
 
 source("config/project.R")
-tar_source("R")
+tar_source("scripts/functions")
 
 tar_option_set(
   packages = c(

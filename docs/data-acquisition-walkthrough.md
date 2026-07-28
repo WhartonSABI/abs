@@ -265,7 +265,7 @@ overturned and 2,918 upheld, for a 53.394% success rate. Two live-feed events
 are absent from Savant's analytical service. They remain in the sequential
 inventory ledger so game totals stay correct, but are explicitly quarantined
 from published success rates and challenge-value summaries. Their identifiers
-and reasons are recorded in `config/feed_only_challenges.csv`.
+and reasons are recorded in `data/reference/feed_only_challenges.csv`.
 
 This is why the project can say both that all live-feed challenge accounting
 reconciles and that published results use the official Savant population. The
@@ -274,13 +274,13 @@ count difference.
 
 ## Reproducibility map
 
-- Acquisition and cache logic: `R/download.R`
-- Live-feed review parsing: `R/live_feed.R`
-- Statcast physical-pitch join: `R/statcast.R`
-- ABS geometry: `R/geometry.R`
-- Sequential inventory: `R/inventory.R`
-- Counterfactual states and value: `R/valuation.R`
-- Acceptance gates: `R/validation.R`
+- Acquisition and cache logic: `scripts/functions/download.R`
+- Live-feed review parsing: `scripts/functions/live_feed.R`
+- Statcast physical-pitch join: `scripts/functions/statcast.R`
+- ABS geometry: `scripts/functions/geometry.R`
+- Sequential inventory: `scripts/functions/inventory.R`
+- Counterfactual states and value: `scripts/functions/valuation.R`
+- Acceptance gates: `scripts/functions/validation.R`
 - Pipeline graph: `_targets.R`
 - Field definitions: `docs/data-dictionary.md`
 - Compact method specification: `docs/methodology.md`
