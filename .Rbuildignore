@@ -24,3 +24,5 @@
 ^report/index\.pdf$
 ^renv$
 ^renv\.lock$
+^\.positai$
+^\.claude$
