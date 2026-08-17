@@ -10,8 +10,6 @@ library(ggplot2)
 library(brms)
 library(mgcv)
 
-# ---- A. data: ledger + umpires + pitch type + catcher ----------------------
-
 # ---- A. data: ledger + umpires + pitch type (fielder_2 already in ledger) --
 
 ledger <- targets::tar_read(pitch_ledger)
@@ -247,62 +245,37 @@ build_car_input <- function(call_type) {
 
 strikes_in <- build_car_input("called_strike")   # the smaller half: pilot here
 
-# ---- PILOT: one chain, 300 iterations, progress every 10 -------------------
-fit_pilot <- brm(
-  wrong | trials(n) ~ car(M, gr = cell, type = "esicar")
-  + (1 | umpire) + (1 | catcher),
-  data = strikes_in$data, data2 = list(M = strikes_in$M),
-  family = binomial(),
-  prior = prior(student_t(3, 0, 2), class = sdcar) +
-    prior(student_t(3, 0, 2), class = sd),
-  chains = 1, iter = 300, warmup = 150, refresh = 10,
-  init = 0, seed = 42
-)
+#new Model with bigger warmup and samples
 
-
-fit_car_strikes <- brm(
-  wrong | trials(n) ~ car(M, gr = cell, type = "esicar")
-  + (1 | umpire) + (1 | catcher),
-  data = strikes_in$data, data2 = list(M = strikes_in$M),
-  family = binomial(),
-  prior = prior(student_t(3, 0, 2), class = sdcar) +
-    prior(student_t(3, 0, 2), class = sd),
-  chains = 4, cores = 4, iter = 2000, init = 0, seed = 42,
-  file = "data/processed/fit_car_strikes"
-)
-
-balls_in <- build_car_input("ball")
 
 fit_car_balls <- brm(
   wrong | trials(n) ~ car(M, gr = cell, type = "esicar")
   + (1 | umpire) + (1 | catcher),
   data = balls_in$data, data2 = list(M = balls_in$M),
   family = binomial(),
-  prior = prior(student_t(3, 0, 2), class = sdcar) +
-    prior(student_t(3, 0, 2), class = sd),
-  chains = 4, cores = 4, iter = 2000, init = 0, seed = 42,
-  file = "data/processed/fit_car_balls"
+  prior = prior(student_t(3, 0, 10), class = sdcar) +
+    prior(normal(0, 0.2), class = sd),
+  control = list(adapt_delta = 0.95),
+  chains = 4, cores = 4,
+  iter = 8000, warmup = 4000,
+  init = 0, seed = 42,
+  file = "data/processed/fit_car_balls_final"
 )
-
 
 fit_car_strikes <- brm(
   wrong | trials(n) ~ car(M, gr = cell, type = "esicar")
   + (1 | umpire) + (1 | catcher),
   data = strikes_in$data, data2 = list(M = strikes_in$M),
   family = binomial(),
-  prior = prior(student_t(3, 0, 2), class = sdcar) +
-    prior(student_t(3, 0, 2), class = sd),
-  chains = 4, cores = 4, iter = 4000, init = 0, seed = 42,
-  file = "data/processed/fit_car_strikes_4k"
+  prior = prior(student_t(3, 0, 10), class = sdcar) +
+    prior(normal(0, 0.2), class = sd),
+  control = list(adapt_delta = 0.95),
+  chains = 4, cores = 4,
+  iter = 8000, warmup = 4000,
+  init = 0, seed = 42,
+  file = "data/processed/fit_car_strikes_final"
 )
 
-fit_car_balls <- brm(
-  wrong | trials(n) ~ car(M, gr = cell, type = "esicar")
-  + (1 | umpire) + (1 | catcher),
-  data = balls_in$data, data2 = list(M = balls_in$M),
-  family = binomial(),
-  prior = prior(student_t(3, 0, 2), class = sdcar) +
-    prior(student_t(3, 0, 2), class = sd),
-  chains = 4, cores = 4, iter = 4000, init = 0, seed = 42,
-  file = "data/processed/fit_car_balls_4k"
-)
+
+
+
