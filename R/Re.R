@@ -309,3 +309,7 @@ ggplot(thr, aes(outs_remaining, 100 * p_star, color = stakes)) +
        color = NULL) +
   theme_minimal(base_size = 13)
 
+
+
+
+source("analysis/run_fixed_probability_mdp.R")
