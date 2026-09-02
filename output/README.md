@@ -14,9 +14,3 @@ make dashboard
 ```
 
 Generated analysis tables belong in `data/processed/`, not here.
-
-The continuous human-perception analysis is a separate research workflow. Its
-tables, validation gates, diagnostics, and manifest are generated under
-`data/processed/perception/`; its source is `report/perception.qmd`, rendered
-with `make perception-report`. V1 intentionally does not change the dashboard
-payload, dashboard figures, or the inventory MDP.

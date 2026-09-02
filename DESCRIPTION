@@ -17,7 +17,6 @@ Imports:
     httr2,
     jsonlite,
     lubridate,
-    Matrix,
     mgcv,
     mvtnorm,
     purrr,
@@ -27,10 +26,8 @@ Imports:
     targets,
     tidyr
 Suggests:
-    brms,
     cmdstanr,
     knitr,
-    posterior,
     renv,
     rmarkdown,
     rprojroot,

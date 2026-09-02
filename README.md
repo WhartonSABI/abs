@@ -8,7 +8,7 @@ actual and counterfactual decisions in run-expectancy and win-probability units.
 The default research snapshot contains completed 2026 MLB regular-season games
 through **August 25, 2026**, the latest fully published game day as of August 26.
 
-## Current snapshot
+## Research snapshot
 
 | Quantity | Count |
 |---|---:|
@@ -31,18 +31,16 @@ geometry, not official rulings.
 ```text
 .
 ├── analysis/
-│   ├── core/                   # Descriptive analysis and legacy MDP runners
-│   ├── perception/             # Perception-model experiments and diagnostics
-│   └── policy/                 # Revealed-policy and fixed-clock runners
+│   └── policy/                 # Empirical fixed-clock production runner
 ├── scripts/
 │   ├── functions/
 │   │   ├── core/               # Acquisition, geometry, inventory, and valuation
-│   │   ├── perception/         # Perception and signal-integration models
-│   │   └── policy/             # Revealed-policy and fixed-clock implementation
-│   ├── stan/                   # Stan programs for continuous perception models
+│   │   ├── perception/         # Signal and margin models
+│   │   └── policy/             # Fixed-clock policy implementation
+│   ├── stan/                   # Hierarchical discrimination model
 │   └── load_functions.R        # Shared recursive function loader
 ├── hpc/
-│   └── fixed-clock/            # Portable Slurm launchers and environment file
+│   └── fixed-clock/            # Production Slurm launcher and environment
 ├── config/                     # Frozen executable project configuration
 ├── data/
 │   ├── raw/                    # Downloaded MLB and Savant inputs; ignored by Git
@@ -55,7 +53,6 @@ geometry, not official rulings.
 ├── tests/
 │   └── testthat/               # Unit and workflow tests
 ├── _targets.R                  # Main reproducible pipeline graph
-├── _targets_perception.R       # Continuous human-perception model graph
 ├── renv.lock                   # Frozen R dependency versions
 └── abs.Rproj                   # RStudio project entry point
 ```
@@ -98,34 +95,22 @@ make dashboard  # Build dashboard JSON and eight static figures
 make outputs    # Pipeline, report, and dashboard
 ```
 
-The continuous human-perception model is intentionally separate from the core
-publication build:
+The empirical fixed-clock policy has two entry points:
 
 ```sh
-make perception-setup   # Install/configure the pinned CmdStan toolchain
-make perception-pilot   # One-fold diagnostic profile
-make perception-full    # All five game-separated folds
-make perception-report  # Render the exploratory perception report
-```
-
-The perception-aware challenge policy has two increasingly expensive entry
-points:
-
-```sh
-make revealed-policy-pilot  # Fast cross-fitted workflow check
-make fixed-clock-smoke      # Bounded end-to-end confirmation check
-make fixed-clock-full       # Full fixed-clock policy and bootstrap analysis
+make fixed-clock-smoke  # Bounded end-to-end confirmation check
+make fixed-clock-full   # Full fixed-clock policy and bootstrap analysis
 ```
 
 The full fixed-clock run is designed for parallel compute. Portable Slurm
 launchers live under `hpc/fixed-clock/`; submit them from the project root or
 set `ABS_PROJECT_DIR` and, optionally, `ABS_ENVIRONMENT_DIR`.
 
-It models a batter acting on one noisy private location signal, not on tracked
-true location. The nonlinear challenge rule is evaluated signal by signal and
-then integrated continuously over the exact rounded ABS geometry. Challenge
-outcomes are quarantined until final held-out evaluation. V1 does not modify the
-dashboard or feed its beliefs into the inventory MDP.
+The production model cross-fits challenge selection and empirical margin
+distributions on the development sample, conditions those distributions by
+role and count with shrinkage, and combines them with the estimated challenge
+signal and Bellman inventory value. Challenge outcomes remain quarantined until
+the frozen policies are evaluated on the July 20 confirmation split.
 
 The normal frozen build uses cached inputs. To refresh or move the endpoint:
 
@@ -158,14 +143,10 @@ Running `make pipeline` writes the following local artifacts under
 | `*_intervals.parquet` | Team/model estimates | Cluster-bootstrap uncertainty intervals |
 | `validation_checks.csv` | Publication checks | Acceptance-test results |
 
-The core pipeline also writes five purpose-specific continuous-perception
-source tables. Challenge actions appear only in
-`continuous_decision_features.parquet`; official and geometry-implied outcomes
-are isolated in `continuous_challenge_labels.parquet`. The heavy workflow writes
-`batter_perception_parameters.parquet`, `human_decision_posteriors.parquet`,
-validation gates, posterior diagnostics, and a reproducibility manifest under
-`data/processed/perception/`. See the [data dictionary](docs/data-dictionary.md)
-for their contracts and leakage boundary.
+The fixed-clock workflow writes its run directory, frozen policies, bootstrap
+checkpoints, diagnostics, and manifests under
+`data/processed/perception/fixed_clock_confirmation/`. See the
+[data dictionary](docs/data-dictionary.md) for the core data contracts.
 
 These analysis-scale files are reproducible and therefore ignored by Git. The
 compact dashboard JSON, figures, and report PDF under `output/` are versioned as

@@ -12,10 +12,12 @@
 ^\.renv-cache$
 ^\.renv-library$
 ^\.renv-root$
+^\.renvignore$
 ^_targets$
 ^_targets\.R$
 ^_quarto\.yml$
 ^_freeze$
+^archive$
 ^data/raw$
 ^data/processed$
 ^output$
