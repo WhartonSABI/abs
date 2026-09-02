@@ -39,29 +39,19 @@ geometry, not official rulings.
 │   │   └── policy/             # Fixed-clock policy implementation
 │   ├── stan/                   # Hierarchical discrimination model
 │   └── load_functions.R        # Shared recursive function loader
-├── hpc/
-│   └── fixed-clock/            # Production Slurm launcher and environment
 ├── config/                     # Frozen executable project configuration
 ├── data/
 │   ├── raw/                    # Downloaded MLB and Savant inputs; ignored by Git
 │   ├── processed/              # Generated analysis tables; ignored by Git
 │   ├── reference/              # Reviewed exclusions, quarantine, and manual audit
 │   └── fixtures/               # Compact, versioned audit fixtures
-├── docs/                       # Acquisition, methodology, and data contracts
 ├── output/                     # Versioned dashboard data, figures, and PDF
 ├── report/                     # Quarto report source
 ├── tests/
 │   └── testthat/               # Unit and workflow tests
 ├── _targets.R                  # Main reproducible pipeline graph
-├── renv.lock                   # Frozen R dependency versions
-└── abs.Rproj                   # RStudio project entry point
+└── renv.lock                   # Frozen R dependency versions
 ```
-
-Additional directory-specific notes live in
-[`config/README.md`](config/README.md),
-[`data/README.md`](data/README.md),
-[`scripts/README.md`](scripts/README.md), and
-[`output/README.md`](output/README.md).
 
 ## Setup
 
@@ -102,10 +92,6 @@ make fixed-clock-smoke  # Bounded end-to-end confirmation check
 make fixed-clock-full   # Full fixed-clock policy and bootstrap analysis
 ```
 
-The full fixed-clock run is designed for parallel compute. Portable Slurm
-launchers live under `hpc/fixed-clock/`; submit them from the project root or
-set `ABS_PROJECT_DIR` and, optionally, `ABS_ENVIRONMENT_DIR`.
-
 The production model cross-fits challenge selection and empirical margin
 distributions on the development sample, conditions those distributions by
 role and count with shrinkage, and combines them with the estimated challenge
@@ -145,8 +131,7 @@ Running `make pipeline` writes the following local artifacts under
 
 The fixed-clock workflow writes its run directory, frozen policies, bootstrap
 checkpoints, diagnostics, and manifests under
-`data/processed/perception/fixed_clock_confirmation/`. See the
-[data dictionary](docs/data-dictionary.md) for the core data contracts.
+`data/processed/perception/fixed_clock_confirmation/`.
 
 These analysis-scale files are reproducible and therefore ignored by Git. The
 compact dashboard JSON, figures, and report PDF under `output/` are versioned as
@@ -173,26 +158,7 @@ inventory was zero. It does not claim the team would have challenged every one
 of those pitches. Likewise, `missed_available` measures recoverable value that
 was available, not a causal estimate of player decision-making skill.
 
-## Documentation
-
-- [Data acquisition walkthrough](docs/data-acquisition-walkthrough.md)
-- [Methodology](docs/methodology.md)
-- [Data dictionary](docs/data-dictionary.md)
-
 The WSABI website consumes `output/dashboard/abs-dashboard-data.json` and hosts
 the interactive dashboard at `/seminar/projects/abs`.
-
-## Contribution checklist
-
-Before opening a pull request:
-
-1. Do not commit `data/raw/`, local libraries, or generated files under
-   `data/processed/`.
-2. Run `make test`.
-3. If analysis logic changed, run `make pipeline` and inspect the validation
-   artifacts.
-4. Update the relevant data contract or methodology documentation.
-5. Rebuild versioned presentation artifacts with `make dashboard` and, when
-   appropriate, `make report`.
 
 Released under the [MIT License](LICENSE).

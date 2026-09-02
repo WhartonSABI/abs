@@ -4,6 +4,7 @@
 .RData
 .Ruserdata
 .Rproj.user/
+*.Rproj
 
 # Local environment and secrets
 .Renviron
@@ -31,7 +32,10 @@ renv/cellar/
 # targets cache
 _targets/
 _targets.RData
-_targets_perception/
+
+# Local operational material and generated execution state
+internal/
+_freeze/
 
 # Quarto caches and rendered support files
 .quarto/
@@ -40,20 +44,10 @@ report/_site/
 report/*_files/
 report/*.html
 report/*.pdf
-!report/perception.html
-!report/perception.pdf
 
 # Downloaded source data and analysis-scale derived data
 data/raw/
 data/processed/*
-!data/processed/README.md
-!data/processed/perception/
-data/processed/perception/*
-!data/processed/perception/batter_perception_parameters.parquet
-!data/processed/perception/human_decision_posteriors.parquet
-!data/processed/perception/validation_gates.csv
-!data/processed/perception/posterior_diagnostics.csv
-!data/processed/perception/model_manifest.json
 
 # Generated Stan/C++ build products (Stan sources remain tracked)
 scripts/stan/*.hpp
@@ -69,7 +63,6 @@ temp/
 
 # Local and cluster runtime logs
 logs/
-hpc/cancelled_logs_*/
 slurm-*.out
 slurm-*.err
 .hpc-env/
@@ -79,6 +72,4 @@ slurm-*.err
 .idea/
 .DS_Store
 Thumbs.db
-
-/.quarto/
 .positai
