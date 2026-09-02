@@ -30,15 +30,15 @@ geometry, not official rulings.
 
 ```text
 .
-├── analysis/
-│   └── policy/                 # Empirical fixed-clock production runner
 ├── scripts/
 │   ├── functions/
 │   │   ├── core/               # Acquisition, geometry, inventory, and valuation
 │   │   ├── perception/         # Signal and margin models
 │   │   └── policy/             # Fixed-clock policy implementation
 │   ├── stan/                   # Hierarchical discrimination model
-│   └── load_functions.R        # Shared recursive function loader
+│   ├── build_dashboard_assets.R
+│   ├── load_functions.R        # Shared recursive function loader
+│   └── run_fixed_clock_confirmation_1d.R
 ├── config/                     # Frozen executable project configuration
 ├── data/
 │   ├── raw/                    # Downloaded MLB and Savant inputs; ignored by Git

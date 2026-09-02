@@ -1,7 +1,7 @@
-# Production: Rscript analysis/policy/run_fixed_clock_confirmation_1d.R
+# Production: Rscript scripts/run_fixed_clock_confirmation_1d.R
 # Bounded end-to-end validation:
 #   ABS_FIXED_CLOCK_PROFILE=smoke ABS_FIXED_CLOCK_REFRESH_TARGETS=false \
-#     Rscript analysis/policy/run_fixed_clock_confirmation_1d.R
+#     Rscript scripts/run_fixed_clock_confirmation_1d.R
 # Optional controls: ABS_FIXED_CLOCK_BOOTSTRAP_REPS,
 # ABS_FIXED_CLOCK_PROCEDURE_BOOTSTRAP_STRIDE, ABS_FIXED_CLOCK_WORKERS,
 # ABS_FIXED_CLOCK_CANDIDATE_WORKERS, ABS_FIXED_CLOCK_POLICY_CV,
@@ -309,7 +309,7 @@ output_base_directory <- file.path(
 )
 source_hashes <- stats::setNames(target_metadata$data, target_metadata$name)
 runner_path <- file.path(
-  project_root, "analysis", "policy", "run_fixed_clock_confirmation_1d.R"
+  project_root, "scripts", "run_fixed_clock_confirmation_1d.R"
 )
 function_paths <- abs_function_files(project_root)
 code_paths <- c(runner_path, function_paths)

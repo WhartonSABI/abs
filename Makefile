@@ -17,10 +17,10 @@ pipeline:
 	Rscript -e 'targets::tar_make()'
 
 fixed-clock-smoke:
-	ABS_FIXED_CLOCK_PROFILE=smoke ABS_FIXED_CLOCK_REFRESH_TARGETS=false Rscript analysis/policy/run_fixed_clock_confirmation_1d.R
+	ABS_FIXED_CLOCK_PROFILE=smoke ABS_FIXED_CLOCK_REFRESH_TARGETS=false Rscript scripts/run_fixed_clock_confirmation_1d.R
 
 fixed-clock-full:
-	Rscript analysis/policy/run_fixed_clock_confirmation_1d.R
+	Rscript scripts/run_fixed_clock_confirmation_1d.R
 
 report:
 	quarto render report/index.qmd
