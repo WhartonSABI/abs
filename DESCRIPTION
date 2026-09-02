@@ -17,7 +17,9 @@ Imports:
     httr2,
     jsonlite,
     lubridate,
+    Matrix,
     mgcv,
+    mvtnorm,
     purrr,
     readr,
     rlang,
@@ -26,6 +28,7 @@ Imports:
     tidyr
 Suggests:
     brms,
+    cmdstanr,
     knitr,
     posterior,
     renv,
@@ -33,4 +36,5 @@ Suggests:
     rprojroot,
     rstan,
     testthat (>= 3.0.0)
+Additional_repositories: https://stan-dev.r-universe.dev
 Config/testthat/edition: 3

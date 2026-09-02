@@ -10,6 +10,15 @@ test_that("audited game recovers every challenge and explicit upheld outcomes", 
   )
   expect_equal(nrow(parsed$challenges[linkage_source == "plate_appearance_terminal"]), 1L)
   expect_no_error(reconcile_feed_totals(parsed$challenges, parsed$totals))
+  expect_identical(parsed$metadata$umpire_id, 482641L)
+  expect_identical(parsed$metadata$umpire_name, "Adrian Johnson")
+})
+
+test_that("home-plate umpire extraction fails closed", {
+  expect_identical(
+    extract_home_plate_umpire(list()),
+    list(id = NA_integer_, name = NA_character_)
+  )
 })
 
 test_that("JSON false survives ingestion and is not treated as missing", {

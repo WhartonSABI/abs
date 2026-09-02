@@ -1,6 +1,6 @@
 ---
 title: "MLB ABS Challenge Run Value"
-subtitle: "Frozen 2026 regular-season snapshot through July 19"
+subtitle: "Frozen 2026 regular-season snapshot through August 25"
 author: "Research pipeline output"
 date: last-modified
 execute:
@@ -220,13 +220,13 @@ kable(decision_table, digits = 3,
   caption = "Challenge outcomes and net value by team")
 
 opportunity_table <- teams_display[, .(
-  team,
-  missed_re = missed_available_re,
-  out_re = out_of_challenges_re,
-  expected_correctable = expected_correctable_remaining,
-  first_unit_re = marginal_re_first_unit,
-  second_unit_re = marginal_re_second_unit
-)][order(-out_re)]
+  Team = team,
+  `Missed RE` = missed_available_re,
+  `Zero-inventory RE` = out_of_challenges_re,
+  `Expected left` = expected_correctable_remaining,
+  `Unit 1 RE` = marginal_re_first_unit,
+  `Unit 2 RE` = marginal_re_second_unit
+)][order(-`Zero-inventory RE`)]
 kable(opportunity_table, digits = 3,
   caption = "Missed, zero-inventory, and remaining-opportunity value")
 
@@ -249,8 +249,11 @@ net_re_table <- merge(
   net_re_intervals[, .(team_id, lower, upper)],
   by = "team_id"
 )[order(-net_re)]
-kable(net_re_table[, .(team, net_re, lower, upper)], digits = 3,
-  caption = "Net challenge RE with 95% game-cluster intervals")
+net_re_display <- net_re_table[seq_len(min(15L, nrow(net_re_table))), .(
+  Team = team, `Net RE` = net_re, Lower = lower, Upper = upper
+)]
+kable(net_re_display, digits = 3,
+  caption = "Top 15 teams by net challenge RE with 95% game-cluster intervals")
 ```
 
 # Sensitivity and limitations

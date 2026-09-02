@@ -12,10 +12,10 @@ ledger %>%
   summarise(mean_stake = mean(potential_challenger_re, na.rm = TRUE), .groups="drop") %>%
   arrange(desc(mean_stake))   # 3-2 and 0-2/3-0 should top the table
 
-source("scripts/functions/valuation.R")
-source("scripts/functions/utils.R")
-source("scripts/functions/modeling.R")
-source("scripts/functions/valuation.R")
+source("scripts/functions/core/valuation.R")
+source("scripts/functions/core/utils.R")
+source("scripts/functions/core/modeling.R")
+source("scripts/functions/core/valuation.R")
 
 library(dplyr); library(tidyr); library(brms); library(data.table)
 
@@ -25,7 +25,8 @@ fit_balls   <- readRDS("data/processed/fit_car_balls_final.rds")
 re_model    <- targets::tar_read(re_model)
 
 # the function files the stakes calc needs
-invisible(lapply(list.files("scripts/functions", full.names = TRUE), source))
+source("scripts/load_functions.R")
+load_abs_functions()
 re_model <- targets::tar_read(re_model)
 
 add_decision_stakes <- function(ledger, re_model) {
@@ -312,4 +313,4 @@ ggplot(thr, aes(outs_remaining, 100 * p_star, color = stakes)) +
 
 
 
-source("analysis/run_fixed_probability_mdp.R")
+source("analysis/core/run_fixed_probability_mdp.R")

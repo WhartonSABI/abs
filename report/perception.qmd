@@ -1,0 +1,453 @@
+---
+title: "Revealed Selection and Perception-Aware ABS Challenge Policy"
+subtitle: "Five-fold cross-validated exploratory analysis"
+author: "JP fork research pipeline"
+date: last-modified
+format:
+  html:
+    embed-resources: true
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(arrow)
+library(data.table)
+library(ggplot2)
+library(jsonlite)
+library(knitr)
+library(rprojroot)
+
+root <- find_root(has_file("_targets.R"), path = getwd())
+derived <- file.path(
+  root, "data", "processed", "perception", "revealed_policy"
+)
+artifact_names <- c(
+  selection = "challenge_selection_oof.parquet",
+  density = "challenge_margin_distributions.parquet",
+  profile = "perception_profile.parquet",
+  belief = "subjective_belief_envelope.parquet",
+  thresholds = "policy_thresholds.parquet",
+  value = "policy_value_summary.csv",
+  manifest = "model_manifest.json"
+)
+artifact_paths <- stats::setNames(
+  file.path(derived, unname(artifact_names)), names(artifact_names)
+)
+if (!all(file.exists(artifact_paths))) {
+  stop(
+    "Revealed-policy artifacts are missing. Run ",
+    "`make revealed-policy-full` before rendering this report."
+  )
+}
+
+selection <- as.data.table(read_parquet(artifact_paths[["selection"]]))
+density <- as.data.table(read_parquet(artifact_paths[["density"]]))
+profile <- as.data.table(read_parquet(artifact_paths[["profile"]]))
+belief <- as.data.table(read_parquet(artifact_paths[["belief"]]))
+thresholds <- as.data.table(read_parquet(artifact_paths[["thresholds"]]))
+policy_value <- fread(artifact_paths[["value"]])
+manifest <- read_json(artifact_paths[["manifest"]], simplifyVector = TRUE)
+for (column in c(
+  "gain_over_observed_re_lower_95", "gain_over_observed_re_upper_95"
+)) {
+  if (!column %in% names(policy_value)) policy_value[, (column) := NA_real_]
+}
+
+diagnostic_path <- function(name) file.path(derived, paste0(name, ".csv"))
+read_diagnostic <- function(name) {
+  path <- diagnostic_path(name)
+  if (file.exists(path)) fread(path) else data.table()
+}
+selection_gate <- read_diagnostic("selection_gate")
+selection_validation <- read_diagnostic("selection_validation")
+official_validation <- read_diagnostic("policy_official_validation")
+prior_scores <- read_diagnostic("prior_oof_log_scores")
+
+snapshot_columns <- lapply(
+  list(selection, density, profile, belief, thresholds, policy_value),
+  function(x) unique(x$snapshot_id)
+)
+if (any(lengths(snapshot_columns) != 1L) ||
+    length(unique(unlist(snapshot_columns))) != 1L) {
+  stop("Primary artifacts do not share exactly one snapshot identifier")
+}
+
+log_loss <- function(y, p) {
+  p <- pmin(1 - 1e-12, pmax(1e-12, p))
+  mean(-(y * log(p) + (1 - y) * log1p(-p)))
+}
+finite_min <- function(x) if (any(is.finite(x))) min(x, na.rm = TRUE) else NA_real_
+finite_max <- function(x) if (any(is.finite(x))) max(x, na.rm = TRUE) else NA_real_
+```
+
+# What is observed, and what is inferred
+
+The primary quantity is directly tied to observed behavior:
+
+\[
+\pi_a(M,z)=P(\text{challenge}\mid M,z,\text{inventory}>0),
+\]
+
+where the role-oriented true margin (M) is positive when the initial call was
+objectively wrong. For offense, this is the physical signed distance; for
+defense, its sign is reversed. Every inventory-available adverse call is an
+opportunity, whether challenged or passed.
+
+Four quantities must remain distinct:
+
+1. **Objective wrongness:** (M>0), from held-out tracked geometry.
+2. **Challenge propensity:** the cross-fitted probability that the human unit
+   challenges at a given true margin and context.
+3. **Model-implied subjective belief:** (q(r)=P(M>0\mid R=r,z)), conditional
+   on an assumed sensory share of the effective behavioral width.
+4. **Normative policy:** challenge when (q(r)>q^*=L/(G+L)), where (G) is
+   the immediate run-expectancy correction and (L) is the Bellman continuation
+   value of the inventory put at risk.
+
+No tracked margin is exposed to the replayed decision rule. It enters only to
+integrate action probabilities over possible private signals and to evaluate
+counterfactual success. Official overturns are joined only after all fits and
+policies are frozen.
+
+# Revealed challenge selection
+
+```{r}
+selection_summary <- selection[, .(
+  opportunities = .N,
+  challenges = sum(action),
+  observed_rate = mean(action),
+  predicted_rate = mean(oof_propensity),
+  heldout_log_loss = log_loss(action, oof_propensity),
+  unit_fallback_rate = mean(unit_fallback),
+  team_fallback_rate = mean(team_fallback),
+  selected_model = paste(sort(unique(selected_model)), collapse = ", ")
+), by = role]
+kable(
+  selection_summary, digits = 4,
+  caption = "Five-fold out-of-fold challenge/pass prediction"
+)
+
+selection[, margin_bin := round(true_margin_inches * 2) / 2]
+selection_curve <- selection[
+  margin_bin >= -8 & margin_bin <= 8,
+  .(
+    opportunities = .N,
+    observed = mean(action),
+    fitted = mean(oof_propensity)
+  ),
+  by = .(role, tail_speed = fifelse(
+    speed_stratum %in% c("slow_non_eephus", "eephus"),
+    "slow / eephus", "ordinary or missing speed"
+  ), margin_bin)
+]
+ggplot(selection_curve, aes(margin_bin, fitted, color = tail_speed)) +
+  geom_vline(xintercept = 0, color = "grey65") +
+  geom_line(linewidth = 0.9) +
+  geom_point(aes(y = observed, size = opportunities), alpha = 0.35) +
+  facet_wrap(~ role) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(
+    x = "True role-oriented margin (inches; positive = call wrong)",
+    y = "Challenge probability",
+    color = "Speed stratum",
+    size = "Opportunities",
+    title = "Observed and fitted challenge selection over the full support"
+  ) +
+  theme_minimal()
+```
+
+The speed-aware full-support GAM is promoted separately by role only if its
+held-out log loss improves by one game-clustered standard error, or if it fixes
+a predeclared tail-calibration problem without a one-SE overall loss. Otherwise
+the local common-probit baseline remains primary. Slow and eephus tails are
+retained and diagnosed separately.
+
+```{r}
+if (nrow(selection_gate)) {
+  kable(
+    selection_gate, digits = 4,
+    caption = "Predeclared full-support model promotion gate"
+  )
+}
+```
+
+# Opportunity priors and challenged margins
+
+The role prior (f(M\mid z)) is fitted from all tracked adverse calls, including
+rows with no available challenge. Shared Gaussian component shapes are combined
+with count-by-coarse-pitch-family weights. Within each outer training fold,
+(K\in\{1,3,6\}) is chosen by the clustered one-SE location-score rule; a
+count-only weighting is retained as a sensitivity.
+
+```{r}
+if (nrow(prior_scores) && all(c(
+  "location_log_density", "count_only_log_density"
+) %in% names(prior_scores))) {
+  prior_sensitivity <- prior_scores[, .(
+    heldout_pitches = .N,
+    count_x_family_mean_log_density = mean(location_log_density),
+    count_only_mean_log_density = mean(count_only_log_density),
+    count_x_family_minus_count_only = mean(
+      location_log_density - count_only_log_density
+    )
+  ), by = role]
+  kable(
+    prior_sensitivity, digits = 4,
+    caption = "Count-by-family prior versus count-only sensitivity"
+  )
+}
+```
+
+The challenged-margin distribution is derived, not separately fitted:
+
+\[
+f(M\mid A=1,z)=
+\frac{f(M\mid z)\pi_a(M,z)}
+{\int f(u\mid z)\pi_a(u,z)\,du}.
+\]
+
+```{r}
+density_near <- density[margin_inches >= -8 & margin_inches <= 8]
+density_plot <- density_near[, .(
+  opportunity_density = weighted.mean(
+    opportunity_density, heldout_context_rows
+  ),
+  challenged_density = weighted.mean(
+    selected_density, heldout_context_rows * selected_action_mass
+  )
+), by = .(role, margin_inches)]
+density_plot <- melt(
+  density_plot,
+  id.vars = c("role", "margin_inches"),
+  variable.name = "distribution", value.name = "density"
+)
+ggplot(density_plot, aes(margin_inches, density, color = distribution)) +
+  geom_vline(xintercept = 0, color = "grey65") +
+  geom_line(linewidth = 0.9) +
+  facet_wrap(~ role, scales = "free_y") +
+  labs(
+    x = "Role-oriented margin (inches; positive = call wrong)",
+    y = "Density",
+    color = NULL,
+    title = "Opportunity and model-implied challenged-margin densities"
+  ) +
+  theme_minimal()
+
+wrong_mass <- unique(density[, .(
+  fold, role, prior_context,
+  opportunity_wrong_call_mass_analytic,
+  selected_wrong_call_mass,
+  selected_action_mass,
+  heldout_context_rows
+)])[, .(
+  opportunity_wrong_call_rate = weighted.mean(
+    opportunity_wrong_call_mass_analytic, heldout_context_rows
+  ),
+  model_implied_challenge_success_rate = weighted.mean(
+    selected_wrong_call_mass,
+    heldout_context_rows * selected_action_mass
+  )
+), by = role]
+kable(
+  wrong_mass, digits = 4,
+  caption = "Prior wrong-call mass and propensity-selected success mass"
+)
+```
+
+# What perception is—and is not—identified
+
+The local challenge curve identifies a common effective behavioral width
+(w_a). It does not uniquely separate sensory uncertainty from action friction.
+The report therefore profiles
+
+\[
+\sigma_{\text{sensory},a}=\kappa_a w_a,\qquad
+\tau_{\text{action},a}=w_a\sqrt{1-\kappa_a^2},
+\]
+
+for all 25 offense/defense combinations with
+(\kappa_a\in\{0,.25,.5,.75,1\}). A scenario belongs to the identified set if
+its joint held-out challenge-choice loss is within one paired,
+game-clustered standard error of the best scenario.
+
+```{r}
+scenario_profile <- unique(profile[, .(
+  scenario_id, offense_kappa, defense_kappa,
+  joint_heldout_log_loss, difference_from_best,
+  one_se_membership, behaviorally_supported, interpretation
+)])
+ggplot(
+  scenario_profile,
+  aes(factor(offense_kappa), factor(defense_kappa),
+      fill = joint_heldout_log_loss)
+) +
+  geom_tile(color = "white") +
+  geom_point(
+    data = scenario_profile[one_se_membership == TRUE],
+    shape = 21, fill = NA, color = "black", size = 4, stroke = 1
+  ) +
+  labs(
+    x = "Offense sensory share (kappa)",
+    y = "Defense sensory share (kappa)",
+    fill = "Held-out\nlog loss",
+    title = "Profiled sensory/action decompositions",
+    subtitle = "Outlined cells are within one game-clustered SE of the best"
+  ) +
+  theme_minimal()
+
+widths <- unique(profile[, .(
+  fold, role, effective_width_inches, kappa,
+  sensory_sigma_inches, action_sigma_inches,
+  one_se_membership, interpretation
+)])
+kable(
+  widths[one_se_membership == TRUE][order(fold, role, kappa)],
+  digits = 3,
+  caption = "Effective, sensory, and action widths in the identified set"
+)
+
+belief_all <- belief[
+  count_state == "all_counts" &
+    perceived_margin_inches >= -8 & perceived_margin_inches <= 8
+]
+ggplot(
+  belief_all,
+  aes(perceived_margin_inches, subjective_q_mean)
+) +
+  geom_ribbon(
+    aes(ymin = subjective_q_min, ymax = subjective_q_max),
+    fill = "#4C78A8", alpha = 0.2
+  ) +
+  geom_line(color = "#2457A6", linewidth = 0.9) +
+  geom_vline(xintercept = 0, color = "grey65") +
+  facet_wrap(~ role) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 1)) +
+  labs(
+    x = "Perceived role-oriented margin r (inches)",
+    y = "Model-implied P(call wrong | r)",
+    title = "Subjective-belief envelope over the identified set",
+    subtitle = paste(
+      "Band spans accepted scenarios, outer folds, and contextual",
+      "pitch-family priors; it is not a confidence interval"
+    )
+  ) +
+  theme_minimal()
+```
+
+```{r}
+if (!all(scenario_profile$behaviorally_supported %in% TRUE)) {
+  cat(
+    "**The structural profile is not non-inferior to the direct selection ",
+    "benchmark by the predeclared one-SE rule. Subjective-belief curves and ",
+    "policy values must therefore be read as assumption-driven sensitivity ",
+    "analyses, not recovered player beliefs.**\n"
+  )
+}
+```
+
+# Bellman thresholds and shared inventory
+
+Each held-out opportunity receives its immediate correction gain (G), the
+training-fold Bellman continuation loss (L), and the payoff threshold
+(q^*=L/(G+L)). Offense and defense share the same chronological team inventory;
+failed challenges consume one, successful challenges retain it, and no future
+tracked truth enters the action rule.
+
+```{r}
+threshold_summary <- thresholds[, .(
+  opportunities = sum(opportunity_rows),
+  mean_G = weighted.mean(G, opportunity_rows),
+  mean_L = weighted.mean(L, opportunity_rows),
+  mean_q_star = weighted.mean(q_star, opportunity_rows),
+  finite_signal_threshold_rate = weighted.mean(
+    is.finite(model_implied_r_star_inches), opportunity_rows
+  ),
+  context_fallback_rate = sum(context_fallback_rows) / sum(opportunity_rows),
+  numerical_root_fallback_rate =
+    sum(numerical_root_fallback_rows) / sum(opportunity_rows)
+), by = .(role, inventory)]
+kable(
+  threshold_summary, digits = 4,
+  caption = "Normative payoff and signal thresholds across accepted scenarios"
+)
+```
+
+# Expected-run policy comparison
+
+The held-out replay compares observed choices, the fitted human-selection
+policy, every accepted normative perception scenario, no challenges, and the
+exact-location oracle. Run expectancy is the objective; WPA is not used.
+
+```{r}
+combined <- policy_value[role == "combined"]
+comparators <- combined[!grepl("^normative__", policy)]
+kable(
+  comparators[, .(
+    policy, policy_family, captured_re, attempts, success_rate,
+    inventory_exhaustion_rate, gain_over_observed_re,
+    gain_over_observed_re_lower_95, gain_over_observed_re_upper_95
+  )],
+  digits = 3,
+  caption = "Combined offense/defense expected-run comparison"
+)
+
+normative <- policy_value[grepl("^normative__", policy)]
+normative_envelope <- normative[, .(
+  scenarios = .N,
+  gain_lower = min(gain_over_observed_re),
+  gain_upper = max(gain_over_observed_re),
+  attempts_lower = min(attempts),
+  attempts_upper = max(attempts),
+  success_rate_lower = min(success_rate),
+  success_rate_upper = max(success_rate),
+  bootstrap_lower = finite_min(gain_over_observed_re_lower_95),
+  bootstrap_upper = finite_max(gain_over_observed_re_upper_95)
+), by = role]
+kable(
+  normative_envelope, digits = 3,
+  caption = "Normative policy envelope over the identified set"
+)
+```
+
+# Final official-outcome validation
+
+Official outcomes never train the prior, selection model, perception profile,
+or Bellman policy. They enter here only to compare official overturns with the
+geometry-implied result among observed challenges. Near-perfect agreement is a
+tracking/label validation and is not evidence that perceived location was
+observed.
+
+```{r}
+if (nrow(official_validation)) {
+  kable(
+    official_validation, digits = 4,
+    caption = "Official versus geometry challenge-result validation"
+  )
+}
+if (nrow(selection_validation)) {
+  kable(
+    selection_validation, digits = 4,
+    caption = "Held-out revealed-selection diagnostics"
+  )
+}
+```
+
+# Scope
+
+These estimates use all games in the current target snapshot with five-fold
+game separation. They are cross-validated and exploratory because no untouched
+temporal confirmation set remains. “Perception-aware” means that policy values
+are reported across plausible latent sensory channels. It does not mean that a
+player's private perceived pitch location, sensory width, or subjective success
+probability was directly observed or point-identified.
+
+```{r}
+cat("Snapshot:", unique(selection$snapshot_id), "\n\n")
+cat("Git SHA:", manifest$git_sha, "\n\n")
+cat("Profile:", manifest$profile, "\n\n")
+cat("Games:", manifest$games, "\n")
+```

@@ -34,9 +34,10 @@ test_that("swing take preparation uses ball-edge geometry and unique pitches", {
   expect_equal(nrow(choices), 3L)
   expect_equal(choices$swing, c(0L, 0L, 1L))
   expect_true(all(is.finite(choices$edge_distance_inches)))
-  expect_false(anyDuplicated(
-    choices[, .(game_pk, at_bat_number, pitch_number)]
-  ))
+  expect_identical(
+    anyDuplicated(choices[, .(game_pk, at_bat_number, pitch_number)]),
+    0L
+  )
 })
 
 test_that("swing take game split is deterministic and separated", {

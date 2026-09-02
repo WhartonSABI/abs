@@ -52,6 +52,26 @@ test_that("terminal opportunity has zero inventory cost", {
   expect_equal(decision$recommended_action, "challenge")
 })
 
+test_that("MDP shrinkage uses opportunity rows rather than table columns", {
+  fit <- fit_challenge_mdp(synthetic_mdp_opportunities(games = 7L))
+  expect_equal(
+    fit$states[stage == 0L & role == "offense", n],
+    14L
+  )
+  expect_equal(
+    fit$states[stage == 1L & role == "defense", n],
+    7L
+  )
+  expect_equal(
+    fit$states[stage == 0L & role == "offense", shrink_weight],
+    14 / (14 + 30)
+  )
+  expect_equal(
+    fit$states[stage == 1L & role == "defense", shrink_weight],
+    7 / (7 + 30)
+  )
+})
+
 test_that("negative empirical RE stakes are valid and are never challenged", {
   x <- data.table::data.table(
     game_pk = 1:10,

@@ -14,7 +14,7 @@ project_config <- function(env = project_environment()) {
   list(
     season = 2026L,
     start_date = as.Date(env_value("ABS_START", "2026-03-25")),
-    cutoff_date = as.Date(env_value("ABS_CUTOFF", "2026-07-19")),
+    cutoff_date = as.Date(env_value("ABS_CUTOFF", "2026-08-25")),
     refresh = identical(tolower(env_value("ABS_REFRESH", "false")), "true"),
     history_start = as.Date("2023-03-30"),
     history_end = as.Date("2025-09-28"),

@@ -36,6 +36,8 @@ teams <- read_derived("team_summaries.parquet")
 players <- read_derived("player_summaries.parquet")
 team_intervals <- read_derived("team_intervals.parquet")
 adjusted_intervals <- read_derived("adjusted_intervals.parquet")
+snapshot_date <- max(as.Date(ledger$game_date), na.rm = TRUE)
+snapshot_label <- sub(" 0", " ", format(snapshot_date, "%B %d, %Y"), fixed = TRUE)
 
 team_lookup <- unique(rbind(
   ledger[, .(team_id = home_team_id, team = home_team)],
@@ -80,7 +82,7 @@ opportunities[, loss_type := fcase(
 )]
 
 league <- list(
-  snapshot = "2026-07-19",
+  snapshot = format(snapshot_date),
   games = uniqueN(ledger$game_pk),
   calledPitches = nrow(ledger),
   geometryCovered = sum(ledger$statcast_identity_matched & ledger$tracking_available),
@@ -338,7 +340,7 @@ p <- ggplot(league_values, aes(re, category, fill = type)) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.16))) +
   labs(
     title = "The largest cost was passing with a challenge available",
-    subtitle = "Immediate run value through July 19, 2026",
+    subtitle = paste("Immediate run value through", snapshot_label),
     x = "Runs", y = NULL, fill = NULL
   ) + base_theme
 save_plot(p, "league-value-comparison", 9.5, 4.8)

@@ -26,8 +26,8 @@ The project therefore uses four public inputs, each for a narrow purpose.
 | Daily Baseball Savant Statcast CSV | Pitch location, strike-zone measurements, count/base/score state, player IDs, and benchmark run/WP fields | The complete ABS review tree, especially upheld challenges and their linkage |
 | Savant ABS team-detail service | The official analytical challenge set, original call, outcome, challenger, edge distance, and Savant value fields | Every called pitch or the full sequential game timeline |
 
-The 2026 snapshot is frozen through July 19. Its canonical raw manifest covers
-114 daily Statcast files, 1,490 unique live game feeds, and 31 Savant files (30
+The 2026 snapshot is frozen through August 25. Its canonical raw manifest covers
+151 daily Statcast files, 1,989 unique live game feeds, and 31 Savant files (30
 team-detail responses plus the dashboard). Every cached source has a SHA-256
 checksum.
 
@@ -77,8 +77,8 @@ coverage; the frozen data has 100% coverage.
 
 ### Large downloads and macOS process forking were fragile
 
-The raw inputs are large: approximately 1.20 GB of 2026 live feeds, 303 MB of
-2026 Statcast CSVs, 22 MB of Savant ABS responses, and 1.07 GB in the canonical
+The raw inputs are large: approximately 1.60 GB of 2026 live feeds, 404 MB of
+2026 Statcast CSVs, 31 MB of Savant ABS responses, and 1.07 GB in the canonical
 historical manifest. Long monolithic transfers timed out during bootstrap.
 Forking R workers while they initialized macOS networking also produced an
 Objective-C `NSCharacterSet initialize` crash.
@@ -156,10 +156,10 @@ counting non-automatic pitches, removes the automatic events, and then joins.
 A matching numeric key is not accepted blindly. Batter and pitcher IDs must
 also agree between sources. If they do not, the row remains in the coverage
 denominator but its Statcast coordinates are not used. In the frozen ledger,
-all 219,405 called pitches find a numeric Statcast key, 61 have an identity
-mismatch, and another 173 identity-matched pitches lack complete tracking.
-This leaves 219,171 geometry-covered pitches, or 99.893%; the lowest team
-coverage is 99.312%, above the 99% publication gate.
+all 292,381 called pitches find a numeric Statcast key, 79 have an identity
+mismatch, and another 175 identity-matched pitches lack complete tracking.
+This leaves 292,127 geometry-covered pitches, or 99.913%; the lowest team
+coverage is 99.480%, above the 99% publication gate.
 
 ## Determining whether a pitch was actually an ABS strike
 
@@ -185,7 +185,7 @@ d_edge_inches = 12 * d_center - 1.45
 
 `d_edge_inches <= 0` is an ABS strike: some part of the ball intersects the
 zone. A positive distance is an ABS ball. This formula reproduces Savant's
-`edge_dist_calc` to floating-point tolerance and agrees with all 6,261 tracked
+`edge_dist_calc` to floating-point tolerance and agrees with all 8,537 tracked
 official Savant challenge rulings in the frozen publication set. Results are
 also repeated after excluding pitches within 0.25 inches of the boundary.
 
@@ -259,13 +259,13 @@ Validation is deliberately redundant:
 5. League and per-team pitch coverage must clear their publication gates.
 6. A 50-event stratified manual audit must continue to pass.
 
-The live feeds contain 6,263 rule-counted challenges: 3,344 overturned and
-2,919 upheld. Savant's official analytical set contains 6,261: 3,343
-overturned and 2,918 upheld, for a 53.394% success rate. Two live-feed events
-are absent from Savant's analytical service. They remain in the sequential
-inventory ledger so game totals stay correct, but are explicitly quarantined
-from published success rates and challenge-value summaries. Their identifiers
-and reasons are recorded in `data/reference/feed_only_challenges.csv`.
+The live feeds contain 8,538 rule-counted challenges: 4,577 overturned and
+3,961 upheld. Savant's official analytical set contains 8,537: 4,577
+overturned and 3,960 upheld, for a 53.614% success rate. One live-feed event is
+absent from Savant's analytical service. It remains in the sequential
+inventory ledger so game totals stay correct, but is explicitly quarantined
+from published success rates and challenge-value summaries. Its identifier and
+reason are recorded in `data/reference/feed_only_challenges.csv`.
 
 This is why the project can say both that all live-feed challenge accounting
 reconciles and that published results use the official Savant population. The
@@ -274,17 +274,17 @@ count difference.
 
 ## Reproducibility map
 
-- Acquisition and cache logic: `scripts/functions/download.R`
-- Live-feed review parsing: `scripts/functions/live_feed.R`
-- Statcast physical-pitch join: `scripts/functions/statcast.R`
-- ABS geometry: `scripts/functions/geometry.R`
-- Sequential inventory: `scripts/functions/inventory.R`
-- Counterfactual states and value: `scripts/functions/valuation.R`
-- Acceptance gates: `scripts/functions/validation.R`
+- Acquisition and cache logic: `scripts/functions/core/download.R`
+- Live-feed review parsing: `scripts/functions/core/live_feed.R`
+- Statcast physical-pitch join: `scripts/functions/core/statcast.R`
+- ABS geometry: `scripts/functions/core/geometry.R`
+- Sequential inventory: `scripts/functions/core/inventory.R`
+- Counterfactual states and value: `scripts/functions/core/valuation.R`
+- Acceptance gates: `scripts/functions/core/validation.R`
 - Pipeline graph: `_targets.R`
 - Field definitions: `docs/data-dictionary.md`
 - Compact method specification: `docs/methodology.md`
 
 The pipeline can be refreshed with `ABS_REFRESH=true`; the default remains the
-frozen July 19 snapshot so later source corrections cannot silently change the
+frozen August 25 snapshot so later source corrections cannot silently change the
 published analysis.

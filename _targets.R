@@ -1,7 +1,8 @@
 library(targets)
 
 source("config/project.R")
-tar_source("scripts/functions")
+source("scripts/load_functions.R")
+tar_source(abs_function_files())
 
 tar_option_set(
   packages = c(
@@ -119,6 +120,18 @@ list(
   tar_target(pitch_ledger,
     add_pitch_values(pitch_ledger_unvalued, re_model, wpa_model)),
   tar_target(remaining_opportunities, build_remaining_opportunities(pitch_ledger)),
+  tar_target(continuous_location_features,
+    prepare_continuous_location_features(statcast)),
+  tar_target(continuous_swing_features,
+    prepare_continuous_swing_features(statcast)),
+  tar_target(continuous_call_features,
+    prepare_continuous_call_features(pitch_ledger)),
+  tar_target(continuous_decision_features,
+    build_batter_decision_features(
+      pitch_ledger, remaining_opportunities, re_model
+    )),
+  tar_target(continuous_challenge_labels,
+    build_batter_challenge_labels(pitch_ledger)),
   tar_target(challenge_events,
     build_challenge_events(pitch_ledger, remaining_opportunities, savant)),
   tar_target(model_validation,
@@ -145,6 +158,26 @@ list(
   tar_target(remaining_opportunities_file,
     write_parquet_atomic(remaining_opportunities,
       file.path(config$derived_dir, "remaining_opportunities.parquet")),
+    format = "file"),
+  tar_target(continuous_location_features_file,
+    write_parquet_atomic(continuous_location_features,
+      file.path(config$derived_dir, "continuous_location_features.parquet")),
+    format = "file"),
+  tar_target(continuous_swing_features_file,
+    write_parquet_atomic(continuous_swing_features,
+      file.path(config$derived_dir, "continuous_swing_features.parquet")),
+    format = "file"),
+  tar_target(continuous_call_features_file,
+    write_parquet_atomic(continuous_call_features,
+      file.path(config$derived_dir, "continuous_call_features.parquet")),
+    format = "file"),
+  tar_target(continuous_decision_features_file,
+    write_parquet_atomic(continuous_decision_features,
+      file.path(config$derived_dir, "continuous_decision_features.parquet")),
+    format = "file"),
+  tar_target(continuous_challenge_labels_file,
+    write_parquet_atomic(continuous_challenge_labels,
+      file.path(config$derived_dir, "continuous_challenge_labels.parquet")),
     format = "file"),
   tar_target(team_summaries_file,
     write_parquet_atomic(team_summaries, file.path(config$derived_dir, "team_summaries.parquet")),
