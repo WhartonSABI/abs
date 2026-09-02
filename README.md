@@ -29,28 +29,35 @@ geometry, not official rulings.
 ## Repository map
 
 ```text
-analysis/core/             Core descriptive and legacy MDP entry points
-analysis/perception/       Perception-model experiments and diagnostics
-analysis/policy/           Revealed-policy and fixed-clock production runners
-scripts/functions/core/    Acquisition, geometry, inventory, and valuation
-scripts/functions/perception/ Perception and signal-integration models
-scripts/functions/policy/  Revealed-policy and fixed-clock implementation
-scripts/stan/              Continuous-perception Stan programs
-scripts/                   Standalone build scripts and script documentation
-hpc/fixed-clock/           Portable Slurm launchers and environment file
-config/                    Frozen executable project configuration
-data/raw/                  Downloaded MLB/Savant inputs; ignored by Git
-data/processed/            Generated analysis tables; ignored by Git
-data/reference/            Reviewed exclusions, quarantine, and manual audit
-data/fixtures/             Compact, versioned audit fixtures
-docs/                      Acquisition, methodology, and data contracts
-output/                    Versioned dashboard data, figures, and PDF
-report/                    Quarto report source
-tests/testthat/            Unit tests
-_targets.R                 Reproducible pipeline graph
-_targets_perception.R      Heavy continuous human-perception model graph
-renv.lock                  Frozen R dependency versions
-abs.Rproj                  RStudio project entry point
+.
+├── analysis/
+│   ├── core/                   # Descriptive analysis and legacy MDP runners
+│   ├── perception/             # Perception-model experiments and diagnostics
+│   └── policy/                 # Revealed-policy and fixed-clock runners
+├── scripts/
+│   ├── functions/
+│   │   ├── core/               # Acquisition, geometry, inventory, and valuation
+│   │   ├── perception/         # Perception and signal-integration models
+│   │   └── policy/             # Revealed-policy and fixed-clock implementation
+│   ├── stan/                   # Stan programs for continuous perception models
+│   └── load_functions.R        # Shared recursive function loader
+├── hpc/
+│   └── fixed-clock/            # Portable Slurm launchers and environment file
+├── config/                     # Frozen executable project configuration
+├── data/
+│   ├── raw/                    # Downloaded MLB and Savant inputs; ignored by Git
+│   ├── processed/              # Generated analysis tables; ignored by Git
+│   ├── reference/              # Reviewed exclusions, quarantine, and manual audit
+│   └── fixtures/               # Compact, versioned audit fixtures
+├── docs/                       # Acquisition, methodology, and data contracts
+├── output/                     # Versioned dashboard data, figures, and PDF
+├── report/                     # Quarto report source
+├── tests/
+│   └── testthat/               # Unit and workflow tests
+├── _targets.R                  # Main reproducible pipeline graph
+├── _targets_perception.R       # Continuous human-perception model graph
+├── renv.lock                   # Frozen R dependency versions
+└── abs.Rproj                   # RStudio project entry point
 ```
 
 Additional directory-specific notes live in
