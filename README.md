@@ -46,6 +46,7 @@ geometry, not official rulings.
 │   ├── reference/              # Reviewed exclusions, quarantine, and manual audit
 │   └── fixtures/               # Compact, versioned audit fixtures
 ├── output/                     # Versioned dashboard data, figures, and PDF
+├── results/                    # Compact, versioned applied model results
 ├── report/                     # Quarto report source
 ├── tests/
 │   └── testthat/               # Unit and workflow tests
@@ -136,6 +137,11 @@ checkpoints, diagnostics, and manifests under
 These analysis-scale files are reproducible and therefore ignored by Git. The
 compact dashboard JSON, figures, and report PDF under `output/` are versioned as
 presentation artifacts.
+
+The compact final-scenario policy outputs used for team comparisons and case
+studies are versioned under `results/fixed_clock/`. This bundle contains the
+applied results and frozen policy without the full run's checkpoints,
+intermediate fits, or alternate-scenario replays.
 
 ## Validation gates
 
