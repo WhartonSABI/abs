@@ -1,6 +1,4 @@
-# Challenge or Pass?
-
-## A Dynamic Policy for MLB’s Automated Ball-Strike System
+# Challenge or Pass? A Dynamic Policy for MLB’s Automated Ball-Strike System
 
 This repository contains the data, code, applied results, and manuscript for
 the MLB automated ball-strike (ABS) challenge-policy study. The central result
