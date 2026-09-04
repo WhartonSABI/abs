@@ -403,7 +403,6 @@ game_pk,game_date,partition
 824613,2026-04-25,development
 824851,2026-04-25,development
 824933,2026-04-25,development
-825093,2026-04-25,development
 822824,2026-04-26,development
 822911,2026-04-26,development
 822991,2026-04-26,development
@@ -419,7 +418,6 @@ game_pk,game_date,partition
 824612,2026-04-26,development
 824852,2026-04-26,development
 824934,2026-04-26,development
-825094,2026-04-26,development
 822825,2026-04-27,development
 822906,2026-04-27,development
 823311,2026-04-27,development
@@ -1818,7 +1816,6 @@ game_pk,game_date,partition
 822696,2026-08-13,confirmation
 822776,2026-08-13,confirmation
 823508,2026-08-13,confirmation
-823669,2026-08-13,confirmation
 823829,2026-08-13,confirmation
 823915,2026-08-13,confirmation
 823995,2026-08-13,confirmation
@@ -1953,7 +1950,6 @@ game_pk,game_date,partition
 823258,2026-08-23,confirmation
 823421,2026-08-23,confirmation
 823507,2026-08-23,confirmation
-823745,2026-08-23,confirmation
 823827,2026-08-23,confirmation
 823909,2026-08-23,confirmation
 824071,2026-08-23,confirmation

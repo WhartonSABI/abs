@@ -94,7 +94,13 @@ prepare_statcast_for_ledger <- function(statcast) {
   x[]
 }
 
-build_pitch_ledger <- function(statcast, live_data, config) {
+build_pitch_ledger <- function(
+  statcast,
+  live_data,
+  config,
+  exclusions = read_abs_exclusions(),
+  game_exclusions = read_abs_game_exclusions()
+) {
   sc <- prepare_statcast_for_ledger(statcast)
   feed <- data.table::copy(live_data$called_pitches)
   reviews <- data.table::copy(live_data$challenges)
@@ -140,7 +146,11 @@ build_pitch_ledger <- function(statcast, live_data, config) {
     !is.na(sz_top) & !is.na(sz_bot)]
   x <- add_abs_geometry(x)
   x <- classify_opportunity(x, config$geometry_sensitivity_inches)
-  x <- apply_abs_eligibility(x)
+  x <- apply_abs_eligibility(
+    x,
+    exclusions = exclusions,
+    game_exclusions = game_exclusions
+  )
   data.table::setorder(x, game_pk, at_bat_number, pitch_number)
   x[, pitch_order := seq_len(.N), by = game_pk]
   x <- reconstruct_inventory(x)

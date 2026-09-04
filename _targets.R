@@ -17,6 +17,16 @@ list(
   tar_target(config_env, project_environment(), cue = tar_cue(mode = "always")),
   tar_target(config, project_config(config_env)),
   tar_target(directories, ensure_directories(config)),
+  tar_target(
+    abs_pitch_exclusions_file,
+    "data/reference/exclusions.csv",
+    format = "file"
+  ),
+  tar_target(
+    abs_game_exclusions_file,
+    "data/reference/game_exclusions.csv",
+    format = "file"
+  ),
 
   tar_target(
     schedule_file,
@@ -66,7 +76,13 @@ list(
   tar_target(statcast, read_statcast_files(statcast_file, game_ids)),
   tar_target(live_data, parse_live_feeds(live_feed_file, cores = 8L)),
   tar_target(savant, read_savant_teams(savant_team_file, config$cutoff_date)),
-  tar_target(pitch_ledger_unvalued, build_pitch_ledger(statcast, live_data, config)),
+  tar_target(pitch_ledger_unvalued, build_pitch_ledger(
+    statcast,
+    live_data,
+    config,
+    exclusions = read_abs_exclusions(abs_pitch_exclusions_file),
+    game_exclusions = read_abs_game_exclusions(abs_game_exclusions_file)
+  )),
 
   tar_target(history_years, 2023:2025),
   tar_target(history_year, history_years, iteration = "vector"),

@@ -1,0 +1,22 @@
+{
+  "schema": "paper_results_bundle_v1",
+  "source_run_directory": "full_97d9d9f3281fc735580d",
+  "selected_candidate_id": "offense_kappa_1.00__defense_kappa_1.00",
+  "binding_evaluation_scenario_id": "offense_kappa_1.00__defense_kappa_1.00",
+  "reporting_games": {
+    "development": 1488,
+    "confirmation": 497
+  },
+  "source_run_games": {
+    "development": 1490,
+    "confirmation": 499
+  },
+  "excluded_games": {
+    "confirmation": ["823669", "823745"],
+    "development": ["825093", "825094"]
+  },
+  "point_estimate_scope": "frozen policy rescored by deleting games without ABS infrastructure",
+  "bootstrap_scope": "5000 whole-game resamples of the corrected 497-game evaluation set, with the learned policy held fixed",
+  "bootstrap_seed": 20260904,
+  "sensitivity_scope": "the original completed-run artifacts retain 100 full-learning and 300 frozen-policy replicates on the uncorrected 499-game calendar and are stored separately rather than relabeled as corrected uncertainty"
+}

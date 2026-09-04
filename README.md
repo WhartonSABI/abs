@@ -1,170 +1,118 @@
-# MLB ABS Challenge Run Value
+# Challenge or Pass?
 
-This project measures the value created or lost by MLB automated ball-strike
-(ABS) challenge decisions. It reconstructs every team's challenge inventory,
-identifies calls that public ABS geometry says were correctable, and values the
-actual and counterfactual decisions in run-expectancy and win-probability units.
+This repository contains the data, code, applied results, and manuscript for
+the MLB automated ball-strike (ABS) challenge-policy study. The central result
+is that a good challenge policy maximizes expected run value, not its success
+rate.
 
-The default research snapshot contains completed 2026 MLB regular-season games
-through **August 25, 2026**, the latest fully published game day as of August 26.
+On 497 temporally held-out games, the learned policy captures 0.5595 modeled
+run expectancy (RE) per game, compared with 0.4595 for observed decisions: a
+gain of 0.1000 RE/game (95% CI [0.0738, 0.1281]). Its model-implied success rate
+is lower, 45.3% versus 54.2%, because it challenges more uncertain calls when
+the potential run value is high.
 
-## Research snapshot
-
-| Quantity | Count |
-|---|---:|
-| Completed games | 1,989 |
-| Called pitches | 292,381 |
-| Parsed challenges with explicit outcomes | 8,538 |
-| Challenges in the official Savant publication set | 8,537 |
-| Geometry-inferred correctable calls | 19,757 |
-| Correctable calls challenged | 4,578 |
-| Correctable calls missed with inventory | 13,751 |
-| Correctable calls encountered at zero inventory | 1,428 |
-
-The pitch ledger is the canonical analysis table. It retains unsuccessful
-challenges as explicit `upheld` outcomes; a JSON `false` outcome is never
-treated as missing. Unchallenged outcomes are inferred from validated public
-geometry, not official rulings.
-
-## Repository map
+## Repository layout
 
 ```text
 .
+├── config/                     # Frozen project and sample configuration
+├── data/
+│   ├── analysis/               # Compressed inputs for the final analysis
+│   ├── fixtures/               # Small raw-data samples used by tests
+│   └── reference/              # Reviewed exclusions and validation records
+├── results/                    # Compact final estimates, replays, and policy
 ├── scripts/
 │   ├── functions/
-│   │   ├── core/               # Acquisition, geometry, inventory, and valuation
-│   │   ├── perception/         # Signal and margin models
-│   │   └── policy/             # Fixed-clock policy implementation
+│   │   ├── core/               # Geometry, inventory, and run valuation
+│   │   ├── perception/         # Effective widths, priors, and posteriors
+│   │   └── policy/             # Direct/maximin and Bellman policy methods
 │   ├── stan/                   # Hierarchical discrimination model
-│   ├── build_dashboard_assets.R
-│   ├── load_functions.R        # Shared recursive function loader
+│   ├── export_paper_results.R  # Export applied results from a completed run
+│   ├── export_public_data.R    # Export the compressed analysis inputs
 │   └── run_fixed_clock_confirmation_1d.R
-├── config/                     # Frozen executable project configuration
-├── data/
-│   ├── raw/                    # Downloaded MLB and Savant inputs; ignored by Git
-│   ├── processed/              # Generated analysis tables; ignored by Git
-│   ├── reference/              # Reviewed exclusions, quarantine, and manual audit
-│   └── fixtures/               # Compact, versioned audit fixtures
-├── output/                     # Versioned dashboard data, figures, and PDF
-├── results/                    # Compact, versioned applied model results
-├── report/                     # Quarto report source
-├── tests/
-│   └── testthat/               # Unit and workflow tests
-├── _targets.R                  # Main reproducible pipeline graph
-└── renv.lock                   # Frozen R dependency versions
+├── paper/
+│   ├── main.tex                # Submission manuscript
+│   ├── references.bib          # Verified bibliography
+│   ├── build_figures.R         # Tables and figures generated from results/
+│   └── figures/                # Versioned manuscript exhibits
+├── output/pdf/                 # Submission-ready manuscript PDF
+├── tests/testthat/             # Unit and workflow tests
+├── _targets.R                  # Upstream data-construction pipeline
+├── DESCRIPTION                 # R dependency declaration
+├── renv.lock                   # Frozen R dependency versions
+└── Makefile                    # Reproducible entry points
 ```
 
-## Setup
+Local downloads, regenerated intermediates, caches, logs, checkpoints, and
+working notes are excluded from Git. Superseded materials live locally under
+the ignored `archive/`; non-public operational material lives under the ignored
+`internal/`.
 
-Requirements:
+## Reproduce the study
 
-- R 4.3 or newer
-- Quarto, including a TeX installation if the PDF report is needed
-- `make`
-
-Clone the repository, create the local environment file, and restore the locked
-R dependencies:
+Requirements are R 4.3 or newer, GNU Make, and a TeX installation for the
+manuscript PDF.
 
 ```sh
 git clone https://github.com/WhartonSABI/abs.git
 cd abs
 cp .Renviron.example .Renviron
 make install
+make test
 ```
 
-`.Renviron` is intentionally ignored because it is machine-specific and may
-eventually contain credentials. The committed example configures the local
-`renv` library and cache used by this project.
-
-## Main workflows
+The versioned `data/analysis/` bundle is the frozen input boundary for the
+final policy. It includes the called-pitch ledger, minimal 2023--2025 RE288
+inputs, the frozen run-expectancy model, challenge events, and the official
+Savant challenge table. The bundle is 47 MB after Zstandard/xz compression;
+no file exceeds GitHub's ordinary 100 MB per-file limit. Verify it with:
 
 ```sh
-make test       # Run the unit suite
-make pipeline   # Build or update the targets pipeline
-make report     # Render the Quarto HTML and PDF report
-make dashboard  # Build dashboard JSON and eight static figures
-make outputs    # Pipeline, report, and dashboard
+cd data/analysis
+shasum -a 256 -c SHA256SUMS
+cd ../..
 ```
 
-The empirical fixed-clock policy has two entry points:
+Run a bounded integration check or the complete final analysis with:
 
 ```sh
-make fixed-clock-smoke  # Bounded end-to-end confirmation check
-make fixed-clock-full   # Full fixed-clock policy and bootstrap analysis
+make fixed-clock-smoke
+make fixed-clock-full
 ```
 
-The production model cross-fits challenge selection and empirical margin
-distributions on the development sample, conditions those distributions by
-role and count with shrinkage, and combines them with the estimated challenge
-signal and Bellman inventory value. Challenge outcomes remain quarantined until
-the frozen policies are evaluated on the July 20 confirmation split.
+The full analysis writes regenerated run directories and checkpoints beneath
+the ignored `data/processed/` tree. It does not overwrite the committed
+`results/` bundle unless results are explicitly exported from a completed run.
 
-The normal frozen build uses cached inputs. To refresh or move the endpoint:
+## Results and manuscript
+
+`results/` contains the exact applied bundle used for every numerical table,
+figure, team comparison, and case study in the paper. The primary result is
+`direct_learning_procedure`; `bellman_structural` is the independent structural
+check. These are modeled RE quantities on the held-out factual opportunity
+clock, not actual runs caused or a regenerated-game counterfactual.
+
+Regenerate the manuscript exhibits from the committed results or build and
+validate the submission PDF with:
 
 ```sh
-ABS_REFRESH=true make pipeline
-ABS_CUTOFF=2026-08-01 ABS_REFRESH=true make pipeline
+make paper-figures
+make paper-check
 ```
 
-Available environment parameters are:
+The finished manuscript is
+[`output/pdf/abs-challenge-policy-review.pdf`](output/pdf/abs-challenge-policy-review.pdf).
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `ABS_START` | `2026-03-25` | First game date |
-| `ABS_CUTOFF` | `2026-08-25` | Last included game date |
-| `ABS_REFRESH` | `false` | Re-download cached inputs |
-| `ABS_BOOTSTRAP_REPS` | `500` | Game-cluster bootstrap replicates |
+## Data provenance
 
-## Data products
+The 2026 pitch ledger covers completed MLB regular-season games through August
+25, 2026. The reporting sample contains 1,488 ABS-enabled development games and
+497 later ABS-enabled confirmation games. The repository redistributes the
+compact derived fields required for analysis; MLB Stats API and Baseball
+Savant remain the authoritative upstream sources.
 
-Running `make pipeline` writes the following local artifacts under
-`data/processed/`:
-
-| File | Unit | Purpose |
-|---|---|---|
-| `pitch_ledger.parquet` | One row per called pitch | Calls, challenge result, geometry, inventory, and pitch value |
-| `challenge_events.parquet` | One row per resolved challenge | Official outcome, immediate value, and failed-inventory cost |
-| `remaining_opportunities.parquet` | One row per team and called pitch | Future opportunity counts/value and marginal inventory value |
-| `team_summaries.parquet` | One row per team | Team decision and inventory summaries |
-| `player_summaries.parquet` | One row per player-role | Player challenge summaries |
-| `*_intervals.parquet` | Team/model estimates | Cluster-bootstrap uncertainty intervals |
-| `validation_checks.csv` | Publication checks | Acceptance-test results |
-
-The fixed-clock workflow writes its run directory, frozen policies, bootstrap
-checkpoints, diagnostics, and manifests under
-`data/processed/perception/fixed_clock_confirmation/`.
-
-These analysis-scale files are reproducible and therefore ignored by Git. The
-compact dashboard JSON, figures, and report PDF under `output/` are versioned as
-presentation artifacts.
-
-The compact final-scenario policy outputs used for team comparisons and case
-studies are versioned under `results/fixed_clock/`. This bundle contains the
-applied results and frozen policy without the full run's checkpoints,
-intermediate fits, or alternate-scenario replays.
-
-## Validation gates
-
-The frozen snapshot currently passes all publication gates:
-
-- Every challenge resolves explicitly to `overturned` or `upheld`.
-- Parsed successful and failed totals reconcile to every MLB game feed.
-- All 8,537 official Savant rows match on play, game, challenger, original call,
-  and outcome.
-- Public geometry agrees with all tracked official rulings.
-- League candidate-pitch coverage is 99.913%; every club exceeds 99%.
-- The 50-event stratified manual audit passes, including upheld challenges and
-  zero-inventory correctable calls.
-- The unit suite passes.
-
-## Interpretation
-
-`out_of_challenges` is the realized value of correctable calls encountered when
-inventory was zero. It does not claim the team would have challenged every one
-of those pitches. Likewise, `missed_available` measures recoverable value that
-was available, not a causal estimate of player decision-making skill.
-
-The WSABI website consumes `output/dashboard/abs-dashboard-data.json` and hosts
-the interactive dashboard at `/seminar/projects/abs`.
+See [`data/analysis/README.md`](data/analysis/README.md) for the public input
+schema and [`results/README.md`](results/README.md) for the applied-results
+schema.
 
 Released under the [MIT License](LICENSE).

@@ -17,15 +17,18 @@ fixed_clock_test_bootstrap_sources_1d <- function() {
   )
 }
 
-test_that("the July 20 fixed clock has deterministic 1490/499 validation", {
+test_that("the July 20 fixed clock has deterministic 1488/497 validation", {
   expectations <- fixed_clock_confirmation_snapshot_expectations_1d()
-  expect_equal(expectations$games, c(1490L, 499L))
+  expect_equal(expectations$games, c(1488L, 497L))
+  expect_equal(expectations$tracked_pitches, c(218896L, 72633L))
+  expect_equal(expectations$eligible_clock_pitches, c(218236L, 72346L))
+  expect_equal(expectations$observed_challenges, c(6263L, 2275L))
   expect_equal(fixed_clock_confirmation_cutoff_1d(), as.Date("2026-07-20"))
 
   ledger <- data.table::data.table(
-    game_pk = sprintf("snapshot_%04d", seq_len(1989L)),
+    game_pk = sprintf("snapshot_%04d", seq_len(1985L)),
     game_date = as.Date(c(
-      rep("2026-07-19", 1490L), rep("2026-07-20", 499L)
+      rep("2026-07-19", 1488L), rep("2026-07-20", 497L)
     )),
     pitch_order = 1L
   )
@@ -33,9 +36,9 @@ test_that("the July 20 fixed clock has deterministic 1490/499 validation", {
   validation <- validate_fixed_clock_confirmation_split_1d(split)
 
   expect_s3_class(split, "fixed_clock_confirmation_split_1d")
-  expect_equal(validation$games, c(1490L, 499L))
+  expect_equal(validation$games, c(1488L, 497L))
   expect_equal(split$summary$partition, c("development", "confirmation"))
-  expect_equal(split$summary$rows, c(1490L, 499L))
+  expect_equal(split$summary$rows, c(1488L, 497L))
   expect_true(all(split$development$game_date < split$cutoff))
   expect_true(all(split$confirmation$game_date >= split$cutoff))
 
@@ -43,9 +46,40 @@ test_that("the July 20 fixed clock has deterministic 1490/499 validation", {
   expect_identical(shuffled$split_sha256, split$split_sha256)
   expect_error(
     validate_fixed_clock_confirmation_split_1d(
-      split, expected_development_games = 1489L
+      split, expected_development_games = 1487L
     ),
-    "expected 1489 and 499"
+    "expected 1487 and 497"
+  )
+})
+
+test_that("unavailable ABS games are absent from the fixed-clock split", {
+  ledger <- data.table::data.table(
+    game_pk = c("10", "10", "11", "12"),
+    game_date = as.Date(c(
+      "2026-07-19", "2026-07-19", "2026-07-19", "2026-07-20"
+    )),
+    abs_eligible = c(FALSE, FALSE, TRUE, TRUE)
+  )
+  exclusions <- data.table::data.table(
+    game_pk = 10L,
+    reason = "no_abs_infrastructure"
+  )
+  filtered <- exclude_fixed_clock_unavailable_games_1d(ledger, exclusions)
+  split <- fixed_clock_confirmation_split_1d(filtered)
+
+  expect_false("10" %in% split$game_split$game_pk)
+  expect_equal(attr(filtered, "excluded_game_ids"), "10")
+  expect_error(
+    exclude_fixed_clock_unavailable_games_1d(
+      ledger[game_pk != "10"], exclusions
+    ),
+    "absent from the pitch ledger"
+  )
+  bad <- data.table::copy(ledger)
+  bad[game_pk == "10", abs_eligible := TRUE]
+  expect_error(
+    exclude_fixed_clock_unavailable_games_1d(bad, exclusions),
+    "marked abs_eligible"
   )
 })
 

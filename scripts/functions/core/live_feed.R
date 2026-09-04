@@ -12,10 +12,35 @@ review_outcome <- function(review) {
   if (isTRUE(as.logical(value[[1L]]))) "overturned" else "upheld"
 }
 
-extract_mj_reviews <- function(review) {
+review_candidates <- function(review) {
   if (is.null(review)) return(list())
-  candidates <- c(list(review), review$additionalReviews %||% list())
-  Filter(function(item) identical(scalar_chr(item$reviewType), "MJ"), candidates)
+  c(list(review), review$additionalReviews %||% list())
+}
+
+extract_mj_reviews <- function(review) {
+  Filter(
+    function(item) identical(scalar_chr(item$reviewType), "MJ"),
+    review_candidates(review)
+  )
+}
+
+has_disqualifying_non_mj_review <- function(review) {
+  candidates <- review_candidates(review)
+  types <- vapply(
+    candidates,
+    function(item) scalar_chr(item$reviewType),
+    character(1)
+  )
+  if (any(types == "MJ", na.rm = TRUE)) return(FALSE)
+  any(vapply(
+    candidates,
+    function(item) {
+      type <- scalar_chr(item$reviewType)
+      !is.na(type) && nzchar(type) && type != "MJ" &&
+        identical(review_outcome(item), "overturned")
+    },
+    logical(1)
+  ))
 }
 
 review_signature <- function(review) {
@@ -49,6 +74,18 @@ called_pitch_events <- function(play) {
         scalar_chr(event$details$call$description, scalar_chr(event$details$description))
       ) %in% c("ball", "called_strike")
   }, events)
+}
+
+extract_pitcher_primary_position <- function(play, game) {
+  pitcher_id <- scalar_int(play$matchup$pitcher$id)
+  players <- game$gameData$players %||% list()
+  player <- players[[paste0("ID", pitcher_id)]] %||% list()
+  position <- player$primaryPosition %||% list()
+  list(
+    code = scalar_chr(position$code),
+    name = scalar_chr(position$name),
+    type = scalar_chr(position$type)
+  )
 }
 
 concurrent_runner_movements <- function(play, event) {
@@ -87,6 +124,7 @@ parse_called_pitch <- function(play, event, game) {
   is_top <- scalar_lgl(play$about$isTopInning)
   away_id <- scalar_int(game$gameData$teams$away$id)
   home_id <- scalar_int(game$gameData$teams$home$id)
+  pitcher_position <- extract_pitcher_primary_position(play, game)
   final_call <- normalize_feed_call(
     scalar_chr(event$details$call$code),
     scalar_chr(event$details$call$description, scalar_chr(event$details$description))
@@ -110,6 +148,12 @@ parse_called_pitch <- function(play, event, game) {
     batter_name = scalar_chr(play$matchup$batter$fullName),
     pitcher_id = scalar_int(play$matchup$pitcher$id),
     pitcher_name = scalar_chr(play$matchup$pitcher$fullName),
+    pitcher_primary_position_code = pitcher_position$code,
+    pitcher_primary_position_name = pitcher_position$name,
+    pitcher_primary_position_type = pitcher_position$type,
+    same_pitch_non_abs_review = has_disqualifying_non_mj_review(
+      event$reviewDetails
+    ),
     final_call = final_call,
     feed_balls_after = scalar_int(event$count$balls),
     feed_strikes_after = scalar_int(event$count$strikes),

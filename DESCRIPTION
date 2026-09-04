@@ -9,6 +9,7 @@ Encoding: UTF-8
 Depends: R (>= 4.3.0)
 Imports:
     arrow,
+    colorspace,
     curl,
     data.table,
     digest,
@@ -16,6 +17,7 @@ Imports:
     ggplot2,
     httr2,
     jsonlite,
+    ltc,
     lubridate,
     mgcv,
     mvtnorm,

@@ -1,0 +1,5 @@
+game_pk,reason,source,notes,game_date,partition
+825093,no_abs_infrastructure,data/raw/live/game_825093.json,2026-04-25 Mexico City game; gameData.absChallenges absent,2026-04-25,development
+825094,no_abs_infrastructure,data/raw/live/game_825094.json,2026-04-26 Mexico City game; gameData.absChallenges absent,2026-04-26,development
+823669,no_abs_infrastructure,data/raw/live/game_823669.json,2026-08-13 Field of Dreams game; gameData.absChallenges absent,2026-08-13,confirmation
+823745,no_abs_infrastructure,data/raw/live/game_823745.json,2026-08-23 Little League Classic; gameData.absChallenges absent,2026-08-23,confirmation

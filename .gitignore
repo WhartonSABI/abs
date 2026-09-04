@@ -5,6 +5,7 @@
 .Ruserdata
 .Rproj.user/
 *.Rproj
+.Rbuildignore
 
 # Local environment and secrets
 .Renviron
@@ -35,19 +36,29 @@ _targets.RData
 
 # Local operational material and generated execution state
 internal/
-_freeze/
+archive/
 
-# Quarto caches and rendered support files
-.quarto/
-**/*.quarto_ipynb
-report/_site/
-report/*_files/
-report/*.html
-report/*.pdf
+# LaTeX build intermediates (the review PDF is copied to output/pdf/)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/main.pdf
 
-# Downloaded source data and analysis-scale derived data
+# Downloaded source data and regenerated analysis outputs. The compact,
+# versioned inputs under data/analysis/ remain public.
 data/raw/
-data/processed/*
+data/processed/
+
+# Generated presentation products; the review manuscript PDF is public.
+output/*
+!output/pdf/
+output/pdf/*
+!output/pdf/abs-challenge-policy-review.pdf
 
 # Generated Stan/C++ build products (Stan sources remain tracked)
 scripts/stan/*.hpp

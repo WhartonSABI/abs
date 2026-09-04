@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Versioned binary research artifacts
+*.parquet binary
+*.rds binary
+*.pdf binary
+*.png binary

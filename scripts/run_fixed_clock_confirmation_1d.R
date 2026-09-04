@@ -43,10 +43,10 @@ fixed_clock_runner_profile <- function(name = c("full", "report", "smoke")) {
       fixed_ridge = 1e-3,
       policy_game_limit = 30L,
       nuisance_game_limit = 200L,
-      prior_family = "gaussian_mixture",
+      prior_family = "empirical_binned",
       empirical_bin_width = 0.01,
-      empirical_shrinkage = 100,
-      empirical_alpha_grid = 100,
+      empirical_shrinkage = 200,
+      empirical_alpha_grid = 200,
       prior_components = 1L,
       bootstrap_reps = 0L,
       procedure_bootstrap_stride = 1L,
@@ -85,13 +85,13 @@ fixed_clock_runner_profile <- function(name = c("full", "report", "smoke")) {
     fixed_ridge = 1e-3,
     policy_game_limit = Inf,
     nuisance_game_limit = Inf,
-    prior_family = "gaussian_mixture",
+    prior_family = "empirical_binned",
     empirical_bin_width = 0.01,
-    empirical_shrinkage = 100,
+    empirical_shrinkage = 200,
     empirical_alpha_grid = c(0, 25, 50, 100, 200),
     prior_components = c(1L, 3L, 6L),
-    bootstrap_reps = if (name == "full") 500L else 0L,
-    procedure_bootstrap_stride = 1L,
+    bootstrap_reps = if (name == "full") 300L else 0L,
+    procedure_bootstrap_stride = 3L,
     optimizer_control = list(maxit = 100L, reltol = 1e-8),
     cv_optimizer_control = list(maxit = 25L, reltol = 1e-7),
     local_optimizer_control = list(maxit = 25L, reltol = 1e-7),
@@ -269,27 +269,75 @@ run_context_re <- fixed_clock_env_flag(
 )
 
 required_targets <- c("pitch_ledger", "re_model", "history_statcast")
-if (refresh_targets) {
-  targets::tar_make(
+public_input_directory <- Sys.getenv(
+  "ABS_FIXED_CLOCK_INPUT_DIR", unset = ""
+)
+if (nzchar(public_input_directory)) {
+  if (!grepl("^/", public_input_directory)) {
+    public_input_directory <- file.path(project_root, public_input_directory)
+  }
+  public_input_directory <- normalizePath(
+    public_input_directory, mustWork = TRUE
+  )
+  public_input_files <- c(
+    pitch_ledger = "pitch_ledger.parquet",
+    re_model = "re288_model.rds",
+    history_statcast = "history_re_inputs.parquet"
+  )
+  public_input_paths <- stats::setNames(
+    file.path(public_input_directory, unname(public_input_files)),
+    names(public_input_files)
+  )
+  missing_public_inputs <- names(public_input_files)[
+    !file.exists(public_input_paths)
+  ]
+  if (length(missing_public_inputs)) {
+    stop(
+      "Public analysis input bundle is incomplete: ",
+      paste(missing_public_inputs, collapse = ", "), call. = FALSE
+    )
+  }
+  target_metadata <- data.table::data.table(
+    name = names(public_input_files),
+    data = vapply(
+      public_input_paths,
+      digest::digest,
+      character(1L),
+      file = TRUE,
+      algo = "sha256"
+    )
+  )
+  pitch_ledger <- data.table::as.data.table(
+    arrow::read_parquet(public_input_paths[["pitch_ledger"]])
+  )
+  re_model <- readRDS(public_input_paths[["re_model"]])
+  history_statcast <- data.table::as.data.table(
+    arrow::read_parquet(public_input_paths[["history_statcast"]])
+  )
+  message("Using the versioned public analysis-input bundle")
+} else {
+  if (refresh_targets) {
+    targets::tar_make(
+      names = tidyselect::any_of(required_targets),
+      callr_function = NULL,
+      reporter = "silent"
+    )
+  }
+  target_metadata <- data.table::as.data.table(targets::tar_meta(
     names = tidyselect::any_of(required_targets),
-    callr_function = NULL,
-    reporter = "silent"
+    fields = c("name", "data", "command", "depend", "time", "size", "bytes")
+  ))
+  if (nrow(target_metadata) != length(required_targets) ||
+      anyNA(target_metadata[, .(name, data)])) {
+    stop("Required target hashes are unavailable", call. = FALSE)
+  }
+  pitch_ledger <- data.table::as.data.table(targets::tar_read(pitch_ledger))
+  re_model <- targets::tar_read(re_model)
+  history_statcast <- data.table::as.data.table(
+    targets::tar_read(history_statcast)
   )
 }
-target_metadata <- data.table::as.data.table(targets::tar_meta(
-  names = tidyselect::any_of(required_targets),
-  fields = c("name", "data", "command", "depend", "time", "size", "bytes")
-))
-if (nrow(target_metadata) != length(required_targets) ||
-    anyNA(target_metadata[, .(name, data)])) {
-  stop("Required target hashes are unavailable", call. = FALSE)
-}
-
-pitch_ledger <- data.table::as.data.table(targets::tar_read(pitch_ledger))
-re_model <- targets::tar_read(re_model)
-history_statcast <- data.table::as.data.table(
-  targets::tar_read(history_statcast)
-)
+pitch_ledger <- exclude_fixed_clock_unavailable_games_1d(pitch_ledger)
 
 message("Validating and hashing the immutable July 20 confirmation split")
 snapshot <- validate_fixed_clock_confirmation_snapshot_1d(pitch_ledger)
@@ -691,9 +739,21 @@ confirmation_truth <- fixed_clock_policy_truth_1d(confirmation_opportunities)
 confirmation_observed <- fixed_clock_policy_observed_actions_1d(
   confirmation_opportunities
 )
-if (nrow(confirmation_clock) != 72956L ||
-    sum(confirmation_observed$observed_challenge) != 2275L) {
-  stop("Confirmation structural clock does not reproduce 72,956 rows/2,275 attempts")
+confirmation_expectations <-
+  fixed_clock_confirmation_snapshot_expectations_1d()[
+    partition == "confirmation"
+  ]
+if (nrow(confirmation_clock) !=
+      confirmation_expectations$eligible_clock_pitches ||
+    sum(confirmation_observed$observed_challenge) !=
+      confirmation_expectations$observed_challenges) {
+  stop(
+    "Confirmation structural clock does not reproduce ",
+    format(confirmation_expectations$eligible_clock_pitches, big.mark = ","),
+    " rows/",
+    format(confirmation_expectations$observed_challenges, big.mark = ","),
+    " attempts", call. = FALSE
+  )
 }
 
 policy_development_games <- development_ledger[, .(

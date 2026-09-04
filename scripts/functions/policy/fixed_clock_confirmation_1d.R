@@ -12,10 +12,47 @@ fixed_clock_confirmation_snapshot_expectations_1d <- function() {
     partition = c("development", "confirmation"),
     first_date = as.Date(c("2026-03-25", "2026-07-20")),
     last_date = as.Date(c("2026-07-19", "2026-08-25")),
-    games = c(1490L, 499L),
-    called_pitches = c(219405L, 72976L),
-    tracked_clock_pitches = c(219171L, 72956L)
+    games = c(1488L, 497L),
+    called_pitches = c(219130L, 72653L),
+    tracked_pitches = c(218896L, 72633L),
+    eligible_clock_pitches = c(218236L, 72346L),
+    observed_challenges = c(6263L, 2275L)
   )
+}
+
+exclude_fixed_clock_unavailable_games_1d <- function(
+  pitch_ledger,
+  game_exclusions = read_abs_game_exclusions()
+) {
+  x <- data.table::copy(data.table::as.data.table(pitch_ledger))
+  .fixed_clock_require_columns_1d(
+    x, "game_pk", "fixed-clock pitch ledger"
+  )
+  exclusions <- data.table::copy(data.table::as.data.table(game_exclusions))
+  if (!nrow(exclusions)) return(x[])
+  .fixed_clock_require_columns_1d(
+    exclusions, c("game_pk", "reason"), "fixed-clock game exclusions"
+  )
+  excluded_ids <- sort(unique(as.character(exclusions$game_pk)))
+  present_ids <- sort(unique(as.character(x$game_pk)))
+  missing_ids <- setdiff(excluded_ids, present_ids)
+  if (length(missing_ids)) {
+    stop(
+      "Fixed-clock game exclusions are absent from the pitch ledger: ",
+      paste(missing_ids, collapse = ", "), call. = FALSE
+    )
+  }
+  excluded <- x[as.character(game_pk) %in% excluded_ids]
+  if ("abs_eligible" %in% names(excluded) &&
+      any(excluded$abs_eligible %in% TRUE)) {
+    stop(
+      "Unavailable ABS games contain pitches marked abs_eligible",
+      call. = FALSE
+    )
+  }
+  x <- x[!as.character(game_pk) %in% excluded_ids]
+  data.table::setattr(x, "excluded_game_ids", excluded_ids)
+  x[]
 }
 
 .fixed_clock_require_columns_1d <- function(x, required, label) {
@@ -174,8 +211,8 @@ fixed_clock_confirmation_split_1d <- function(
 
 validate_fixed_clock_confirmation_split_1d <- function(
   split,
-  expected_development_games = 1490L,
-  expected_confirmation_games = 499L,
+  expected_development_games = 1488L,
+  expected_confirmation_games = 497L,
   expected_development_rows = NULL,
   expected_confirmation_rows = NULL
 ) {

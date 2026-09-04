@@ -33,6 +33,78 @@ test_that("manual position-player and outage exclusions are respected", {
   expect_equal(out$correctable_opportunity, c(TRUE, FALSE))
 })
 
+test_that("game exclusions make every pitch in an unavailable game ineligible", {
+  pitches <- data.table::data.table(
+    game_pk = c(10L, 10L, 11L),
+    at_bat_number = c(1L, 2L, 1L),
+    pitch_number = 1L,
+    correctable_opportunity = TRUE
+  )
+  game_exclusions <- data.table::data.table(
+    game_pk = 10L,
+    reason = "no_abs_infrastructure",
+    source = "test"
+  )
+  out <- apply_abs_eligibility(
+    pitches,
+    exclusions = data.table::data.table(),
+    game_exclusions = game_exclusions
+  )
+  expect_equal(out$abs_eligible, c(FALSE, FALSE, TRUE))
+  expect_equal(out$correctable_opportunity, c(FALSE, FALSE, TRUE))
+  expect_equal(
+    out[game_pk == 10L, unique(exclusion_reason)],
+    "no_abs_infrastructure"
+  )
+})
+
+test_that("versioned game exclusions identify the four 2026 outage games", {
+  exclusions <- read_abs_game_exclusions(
+    file.path(project_root, "data", "reference", "game_exclusions.csv")
+  )
+  expect_setequal(exclusions$game_pk, c(825093L, 825094L, 823669L, 823745L))
+  expect_true(all(exclusions$reason == "no_abs_infrastructure"))
+  expect_true(all(nzchar(exclusions$source)))
+})
+
+test_that("pitcher position eligibility permits pitchers, two-way, and missing metadata", {
+  pitches <- data.table::data.table(
+    game_pk = 20L,
+    at_bat_number = 1:4,
+    pitch_number = 1L,
+    pitcher_primary_position_code = c("1", "Y", "2", NA_character_),
+    same_pitch_non_abs_review = FALSE,
+    correctable_opportunity = TRUE
+  )
+  out <- apply_abs_eligibility(
+    pitches,
+    exclusions = data.table::data.table(),
+    game_exclusions = data.table::data.table()
+  )
+  expect_equal(out$abs_eligible, c(TRUE, TRUE, FALSE, TRUE))
+  expect_equal(out$correctable_opportunity, c(TRUE, TRUE, FALSE, TRUE))
+  expect_identical(out$exclusion_reason[[3L]], "position_player_pitching")
+})
+
+test_that("only exact-pitch non-ABS review flags make review rows ineligible", {
+  pitches <- data.table::data.table(
+    game_pk = 21L,
+    at_bat_number = 1:3,
+    pitch_number = 1L,
+    pitcher_primary_position_code = "1",
+    same_pitch_non_abs_review = c(FALSE, TRUE, NA),
+    correctable_opportunity = TRUE
+  )
+  out <- apply_abs_eligibility(
+    pitches,
+    exclusions = data.table::data.table(),
+    game_exclusions = data.table::data.table()
+  )
+  expect_equal(out$abs_eligible, c(TRUE, FALSE, TRUE))
+  expect_equal(out$correctable_opportunity, c(TRUE, FALSE, TRUE))
+  expect_identical(out$exclusion_reason[[2L]], "same_pitch_non_abs_review")
+})
+
 test_that("vectorized call branches reproduce scalar transitions", {
   rows <- data.table::data.table(
     balls_before = c(3L, 1L, 0L, 2L),
