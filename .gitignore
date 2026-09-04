@@ -54,11 +54,8 @@ paper/main.pdf
 data/raw/
 data/processed/
 
-# Generated presentation products; the review manuscript PDF is public.
-output/*
-!output/pdf/
-output/pdf/*
-!output/pdf/abs-challenge-policy-review.pdf
+# Generated presentation products
+output/
 
 # Generated Stan/C++ build products (Stan sources remain tracked)
 scripts/stan/*.hpp

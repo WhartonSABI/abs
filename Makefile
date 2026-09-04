@@ -5,7 +5,7 @@ PAPER_TEX := $(PAPER_DIR)/main.tex
 PAPER_PDF := $(PAPER_DIR)/main.pdf
 PAPER_LOG := $(PAPER_DIR)/main.log
 PAPER_AUX := $(PAPER_DIR)/main.aux
-PAPER_REVIEW_PDF := output/pdf/abs-challenge-policy-review.pdf
+PAPER_REVIEW_PDF := internal/output/abs-challenge-policy-review.pdf
 PAPER_MAX_BODY_PAGES ?= 10
 PAPER_IDENTIFY_RE ?= /Users/|/vast/
 -include internal/anonymity.mk

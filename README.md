@@ -35,7 +35,6 @@ the potential run value is high.
 │   ├── references.bib          # Verified bibliography
 │   ├── build_figures.R         # Tables and figures generated from results/
 │   └── figures/                # Versioned manuscript exhibits
-├── output/pdf/                 # Submission-ready manuscript PDF
 ├── tests/testthat/             # Unit and workflow tests
 ├── _targets.R                  # Upstream data-construction pipeline
 ├── DESCRIPTION                 # R dependency declaration
@@ -100,8 +99,9 @@ make paper-figures
 make paper-check
 ```
 
-The finished manuscript is
-[`output/pdf/abs-challenge-policy-review.pdf`](output/pdf/abs-challenge-policy-review.pdf).
+The generated PDF is written to the ignored
+`internal/output/abs-challenge-policy-review.pdf`; the versioned paper source
+and figures remain under `paper/`.
 
 ## Data provenance
 
